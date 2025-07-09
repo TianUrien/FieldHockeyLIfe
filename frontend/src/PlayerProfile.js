@@ -331,7 +331,7 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
               player.photos.map((photo) => (
                 <div key={photo.id} className="media-item">
                   <img 
-                    src={`${BACKEND_URL}/uploads/photos/${photo.filename}`} 
+                    src={`${BACKEND_URL}/api/uploads/photos/${photo.filename}`} 
                     alt={photo.original_name}
                     className="media-thumbnail"
                   />
