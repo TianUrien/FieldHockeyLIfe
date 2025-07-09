@@ -40,8 +40,8 @@ function App() {
       const response = await axios.post(`${API}/players`, playerData);
       setCurrentUser(response.data);
       setUserType('player');
-      setCurrentView('player-dashboard');
       loadData();
+      setCurrentView('player-dashboard');
     } catch (error) {
       alert(error.response?.data?.detail || "Error registering player");
     }
