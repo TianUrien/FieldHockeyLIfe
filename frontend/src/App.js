@@ -59,6 +59,30 @@ function App() {
     }
   };
 
+  const handlePlayerLogin = async (loginData) => {
+    try {
+      const response = await axios.post(`${API}/players/login`, loginData);
+      setCurrentUser(response.data);
+      setUserType('player');
+      loadData();
+      setCurrentView('player-dashboard');
+    } catch (error) {
+      alert(error.response?.data?.detail || "Invalid email or password");
+    }
+  };
+
+  const handleClubLogin = async (loginData) => {
+    try {
+      const response = await axios.post(`${API}/clubs/login`, loginData);
+      setCurrentUser(response.data);
+      setUserType('club');
+      loadData();
+      setCurrentView('club-dashboard');
+    } catch (error) {
+      alert(error.response?.data?.detail || "Invalid email or password");
+    }
+  };
+
   const handleVacancyCreate = async (vacancyData) => {
     try {
       vacancyData.club_id = currentUser.id;
