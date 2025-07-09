@@ -307,15 +307,36 @@ class Application(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     player_id: str
     player_name: str
+    player_position: str
+    player_location: str
+    player_experience: str
     vacancy_id: str
+    vacancy_title: str
     vacancy_position: str
     club_name: str
-    status: str = "pending"  # "pending", "accepted", "rejected"
+    # Enhanced application fields
+    status: str = "pending"  # "pending", "reviewed", "shortlisted", "accepted", "rejected"
+    priority: str = "normal"  # "low", "normal", "high"
+    rating: Optional[int] = None  # 1-5 star rating from club
+    notes: Optional[str] = None  # Club notes about the application
+    cover_letter: Optional[str] = None  # Player's cover letter
+    reviewed_by: Optional[str] = None  # Club member who reviewed
+    reviewed_at: Optional[datetime] = None
+    # Metadata
     applied_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class ApplicationCreate(BaseModel):
     player_id: str
     vacancy_id: str
+    cover_letter: Optional[str] = None
+
+class ApplicationUpdate(BaseModel):
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    rating: Optional[int] = None
+    notes: Optional[str] = None
+    reviewed_by: Optional[str] = None
 
 # Basic routes
 @api_router.get("/")
