@@ -289,6 +289,12 @@ const PlayerRegister = ({ onRegister }) => {
           onChange={(e) => setFormData({...formData, password: e.target.value})}
           required
         />
+        <input
+          type="text"
+          placeholder="Country"
+          value={formData.country}
+          onChange={(e) => setFormData({...formData, country: e.target.value})}
+        />
         <select
           value={formData.position}
           onChange={(e) => setFormData({...formData, position: e.target.value})}
