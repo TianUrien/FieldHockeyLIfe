@@ -484,16 +484,12 @@ const PlayerDashboard = ({ player, applications, onPlayerUpdate }) => (
   </div>
 );
 
-const ClubDashboard = ({ club, vacancies, applications, onCreateVacancy }) => (
+const ClubDashboard = ({ club, vacancies, applications, onCreateVacancy, onClubUpdate }) => (
   <div className="dashboard-container">
     <h2>Club Dashboard</h2>
     <div className="dashboard-grid">
-      <div className="profile-card">
-        <h3>Club Profile</h3>
-        <p><strong>Name:</strong> {club.name}</p>
-        <p><strong>Location:</strong> {club.location}</p>
-        {club.description && <p><strong>Description:</strong> {club.description}</p>}
-        {club.established_year && <p><strong>Established:</strong> {club.established_year}</p>}
+      <div className="full-width-section">
+        <ClubProfile club={club} onClubUpdate={onClubUpdate} />
       </div>
       
       <div className="vacancies-card">
