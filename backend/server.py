@@ -354,14 +354,18 @@ async def upload_photo(player_id: str, file: UploadFile = File(...)):
     # Save file
     filename = save_uploaded_file(file, "photos", MAX_PHOTO_SIZE, ALLOWED_IMAGE_TYPES)
     
+    # Get file size
+    file.file.seek(0)
+    file_content = file.file.read()
+    file_size = len(file_content)
+    
     # Create media file object
     media_file = MediaFile(
         filename=filename,
         original_name=file.filename,
-        file_type=file.content_type,
-        file_size=len(file.file.read())
+        file_type=file.content_type or "image/jpeg",
+        file_size=file_size
     )
-    file.file.seek(0)  # Reset file pointer
     
     # Add to player's photos
     await db.players.update_one(
@@ -380,14 +384,18 @@ async def upload_video(player_id: str, file: UploadFile = File(...)):
     # Save file
     filename = save_uploaded_file(file, "videos", MAX_VIDEO_SIZE, ALLOWED_VIDEO_TYPES)
     
+    # Get file size
+    file.file.seek(0)
+    file_content = file.file.read()
+    file_size = len(file_content)
+    
     # Create media file object
     media_file = MediaFile(
         filename=filename,
         original_name=file.filename,
-        file_type=file.content_type,
-        file_size=len(file.file.read())
+        file_type=file.content_type or "video/mp4",
+        file_size=file_size
     )
-    file.file.seek(0)  # Reset file pointer
     
     # Add to player's videos
     await db.players.update_one(
