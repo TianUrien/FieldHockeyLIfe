@@ -255,6 +255,7 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         vacancy_data = {
             "club_id": cls.club_id,
             "position": "Midfielder",
+            "title": "Midfielder Position",
             "description": "Test vacancy description",
             "requirements": "Test requirements",
             "experience_level": "Intermediate",
