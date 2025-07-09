@@ -32,7 +32,7 @@ ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/x-msvideo"}
 MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5MB
 MAX_DOCUMENT_SIZE = 10 * 1024 * 1024  # 10MB
 MAX_PHOTO_SIZE = 10 * 1024 * 1024  # 10MB
-MAX_VIDEO_SIZE = 100 * 1024 * 1024  # 100MB
+MAX_VIDEO_SIZE = 300 * 1024 * 1024  # 300MB (increased for larger videos)
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
