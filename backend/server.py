@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, File, UploadFile, Form
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -10,6 +11,9 @@ from typing import List, Optional
 import uuid
 from datetime import datetime
 from passlib.context import CryptContext
+import shutil
+import magic
+from urllib.parse import quote
 
 
 ROOT_DIR = Path(__file__).parent
@@ -18,6 +22,18 @@ load_dotenv(ROOT_DIR / '.env')
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# File upload settings
+UPLOAD_DIR = ROOT_DIR / "uploads"
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif"}
+ALLOWED_DOCUMENT_TYPES = {"application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/x-msvideo"}
+
+# File size limits (in bytes)
+MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_DOCUMENT_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_PHOTO_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_VIDEO_SIZE = 100 * 1024 * 1024  # 100MB
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
@@ -25,6 +41,9 @@ db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
 app = FastAPI()
+
+# Serve uploaded files
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -37,26 +56,87 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
+def validate_file_type(file_content: bytes, allowed_types: set) -> bool:
+    """Validate file type using python-magic"""
+    try:
+        mime = magic.from_buffer(file_content, mime=True)
+        return mime in allowed_types
+    except:
+        return False
+
+def save_uploaded_file(file: UploadFile, directory: str, max_size: int, allowed_types: set) -> str:
+    """Save uploaded file and return filename"""
+    # Read file content
+    file_content = file.file.read()
+    file.file.seek(0)  # Reset file pointer
+    
+    # Validate file size
+    if len(file_content) > max_size:
+        raise HTTPException(status_code=400, detail=f"File too large. Maximum size: {max_size // (1024*1024)}MB")
+    
+    # Validate file type
+    if not validate_file_type(file_content, allowed_types):
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    
+    # Generate unique filename
+    file_extension = Path(file.filename).suffix
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    
+    # Create directory if it doesn't exist
+    upload_path = UPLOAD_DIR / directory
+    upload_path.mkdir(parents=True, exist_ok=True)
+    
+    # Save file
+    file_path = upload_path / unique_filename
+    with open(file_path, "wb") as buffer:
+        buffer.write(file_content)
+    
+    return unique_filename
+
 
 # Define Models
+class MediaFile(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    filename: str
+    original_name: str
+    file_type: str
+    file_size: int
+    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+
 class Player(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     email: str
+    country: Optional[str] = None
     position: str
     experience_level: str  # "Beginner", "Intermediate", "Advanced", "Professional"
     location: str
     bio: Optional[str] = None
     age: Optional[int] = None
+    avatar: Optional[str] = None  # filename
+    cv_document: Optional[str] = None  # filename
+    photos: List[MediaFile] = []
+    videos: List[MediaFile] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class PlayerCreate(BaseModel):
     name: str
     email: str
     password: str
+    country: Optional[str] = None
     position: str
     experience_level: str
     location: str
+    bio: Optional[str] = None
+    age: Optional[int] = None
+
+class PlayerUpdate(BaseModel):
+    name: Optional[str] = None
+    country: Optional[str] = None
+    position: Optional[str] = None
+    experience_level: Optional[str] = None
+    location: Optional[str] = None
     bio: Optional[str] = None
     age: Optional[int] = None
 
@@ -171,6 +251,8 @@ async def create_player(player: PlayerCreate):
     player_dict = player.dict()
     player_dict.pop("password")  # Remove plain password
     player_dict["password_hash"] = password_hash
+    player_dict["photos"] = []
+    player_dict["videos"] = []
     
     player_obj = Player(**{k: v for k, v in player_dict.items() if k != "password_hash"})
     
@@ -194,6 +276,168 @@ async def get_player(player_id: str):
         raise HTTPException(status_code=404, detail="Player not found")
     player.pop("password_hash", None)
     return Player(**player)
+
+@api_router.put("/players/{player_id}", response_model=Player)
+async def update_player(player_id: str, player_update: PlayerUpdate):
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    # Update only provided fields
+    update_data = {k: v for k, v in player_update.dict().items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow()
+    
+    await db.players.update_one({"id": player_id}, {"$set": update_data})
+    
+    # Return updated player
+    updated_player = await db.players.find_one({"id": player_id})
+    updated_player.pop("password_hash", None)
+    return Player(**updated_player)
+
+# File upload routes
+@api_router.post("/players/{player_id}/avatar")
+async def upload_avatar(player_id: str, file: UploadFile = File(...)):
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    # Save file
+    filename = save_uploaded_file(file, "avatars", MAX_AVATAR_SIZE, ALLOWED_IMAGE_TYPES)
+    
+    # Update player with new avatar
+    await db.players.update_one(
+        {"id": player_id}, 
+        {"$set": {"avatar": filename, "updated_at": datetime.utcnow()}}
+    )
+    
+    return {"filename": filename, "message": "Avatar uploaded successfully"}
+
+@api_router.post("/players/{player_id}/cv")
+async def upload_cv(player_id: str, file: UploadFile = File(...)):
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    # Save file
+    filename = save_uploaded_file(file, "documents", MAX_DOCUMENT_SIZE, ALLOWED_DOCUMENT_TYPES)
+    
+    # Update player with new CV
+    await db.players.update_one(
+        {"id": player_id}, 
+        {"$set": {"cv_document": filename, "updated_at": datetime.utcnow()}}
+    )
+    
+    return {"filename": filename, "message": "CV uploaded successfully"}
+
+@api_router.post("/players/{player_id}/photos")
+async def upload_photo(player_id: str, file: UploadFile = File(...)):
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    # Save file
+    filename = save_uploaded_file(file, "photos", MAX_PHOTO_SIZE, ALLOWED_IMAGE_TYPES)
+    
+    # Create media file object
+    media_file = MediaFile(
+        filename=filename,
+        original_name=file.filename,
+        file_type=file.content_type,
+        file_size=len(file.file.read())
+    )
+    file.file.seek(0)  # Reset file pointer
+    
+    # Add to player's photos
+    await db.players.update_one(
+        {"id": player_id}, 
+        {"$push": {"photos": media_file.dict()}, "$set": {"updated_at": datetime.utcnow()}}
+    )
+    
+    return {"filename": filename, "message": "Photo uploaded successfully"}
+
+@api_router.post("/players/{player_id}/videos")
+async def upload_video(player_id: str, file: UploadFile = File(...)):
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    # Save file
+    filename = save_uploaded_file(file, "videos", MAX_VIDEO_SIZE, ALLOWED_VIDEO_TYPES)
+    
+    # Create media file object
+    media_file = MediaFile(
+        filename=filename,
+        original_name=file.filename,
+        file_type=file.content_type,
+        file_size=len(file.file.read())
+    )
+    file.file.seek(0)  # Reset file pointer
+    
+    # Add to player's videos
+    await db.players.update_one(
+        {"id": player_id}, 
+        {"$push": {"videos": media_file.dict()}, "$set": {"updated_at": datetime.utcnow()}}
+    )
+    
+    return {"filename": filename, "message": "Video uploaded successfully"}
+
+@api_router.delete("/players/{player_id}/photos/{photo_id}")
+async def delete_photo(player_id: str, photo_id: str):
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    # Find and remove photo
+    photo_to_remove = None
+    for photo in player.get("photos", []):
+        if photo["id"] == photo_id:
+            photo_to_remove = photo
+            break
+    
+    if not photo_to_remove:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    # Remove file from filesystem
+    file_path = UPLOAD_DIR / "photos" / photo_to_remove["filename"]
+    if file_path.exists():
+        file_path.unlink()
+    
+    # Remove from database
+    await db.players.update_one(
+        {"id": player_id}, 
+        {"$pull": {"photos": {"id": photo_id}}, "$set": {"updated_at": datetime.utcnow()}}
+    )
+    
+    return {"message": "Photo deleted successfully"}
+
+@api_router.delete("/players/{player_id}/videos/{video_id}")
+async def delete_video(player_id: str, video_id: str):
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    # Find and remove video
+    video_to_remove = None
+    for video in player.get("videos", []):
+        if video["id"] == video_id:
+            video_to_remove = video
+            break
+    
+    if not video_to_remove:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Remove file from filesystem
+    file_path = UPLOAD_DIR / "videos" / video_to_remove["filename"]
+    if file_path.exists():
+        file_path.unlink()
+    
+    # Remove from database
+    await db.players.update_one(
+        {"id": player_id}, 
+        {"$pull": {"videos": {"id": video_id}}, "$set": {"updated_at": datetime.utcnow()}}
+    )
+    
+    return {"message": "Video deleted successfully"}
 
 # Club routes
 @api_router.post("/clubs", response_model=Club)
