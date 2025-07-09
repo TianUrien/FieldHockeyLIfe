@@ -14,6 +14,7 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         cls.test_id = str(uuid.uuid4())[:8]
         cls.player_email = f"player_{cls.test_id}@test.com"
         cls.club_email = f"club_{cls.test_id}@test.com"
+        cls.password = "TestPassword123!"
         
         # Store created resources for cleanup and further tests
         cls.player_id = None
@@ -37,11 +38,12 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
             print(f"❌ Root endpoint test failed: {response.status_code} - {response.text}")
             return
         
-        # Test player registration
-        print("\n🔍 Testing player registration...")
+        # Test player registration with password
+        print("\n🔍 Testing player registration with password...")
         player_data = {
             "name": f"Test Player {cls.test_id}",
             "email": cls.player_email,
+            "password": cls.password,
             "position": "Forward",
             "experience_level": "Intermediate",
             "location": "Test City",
@@ -53,16 +55,62 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         if response.status_code == 200:
             player = response.json()
             cls.player_id = player["id"]
-            print(f"✅ Player registration test passed. Player ID: {cls.player_id}")
+            # Check that password is not in the response
+            if "password" not in player and "password_hash" not in player:
+                print(f"✅ Player registration test passed. Player ID: {cls.player_id}")
+                print("✅ Password security check passed - password not visible in response")
+            else:
+                print("❌ Password security check failed - password visible in response")
+                return
         else:
             print(f"❌ Player registration test failed: {response.status_code} - {response.text}")
             return
         
-        # Test club registration
-        print("\n🔍 Testing club registration...")
+        # Test player login with correct credentials
+        print("\n🔍 Testing player login with correct credentials...")
+        login_data = {
+            "email": cls.player_email,
+            "password": cls.password
+        }
+        
+        response = requests.post(f"{BASE_URL}/players/login", json=login_data)
+        if response.status_code == 200:
+            player = response.json()
+            if player["id"] == cls.player_id:
+                print("✅ Player login test passed")
+                # Check that password is not in the response
+                if "password" not in player and "password_hash" not in player:
+                    print("✅ Password security check passed - password not visible in response")
+                else:
+                    print("❌ Password security check failed - password visible in response")
+                    return
+            else:
+                print("❌ Player login test failed: Incorrect player data returned")
+                return
+        else:
+            print(f"❌ Player login test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test player login with incorrect credentials
+        print("\n🔍 Testing player login with incorrect credentials...")
+        login_data = {
+            "email": cls.player_email,
+            "password": "WrongPassword123!"
+        }
+        
+        response = requests.post(f"{BASE_URL}/players/login", json=login_data)
+        if response.status_code == 401:
+            print("✅ Player login with incorrect credentials test passed")
+        else:
+            print(f"❌ Player login with incorrect credentials test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test club registration with password
+        print("\n🔍 Testing club registration with password...")
         club_data = {
             "name": f"Test Club {cls.test_id}",
             "email": cls.club_email,
+            "password": cls.password,
             "location": "Test City",
             "description": "Test club description",
             "contact_info": "test@club.com",
@@ -73,7 +121,13 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         if response.status_code == 200:
             club = response.json()
             cls.club_id = club["id"]
-            print(f"✅ Club registration test passed. Club ID: {cls.club_id}")
+            # Check that password is not in the response
+            if "password" not in club and "password_hash" not in club:
+                print(f"✅ Club registration test passed. Club ID: {cls.club_id}")
+                print("✅ Password security check passed - password not visible in response")
+            else:
+                print("❌ Password security check failed - password visible in response")
+                return
         else:
             print(f"❌ Club registration test failed: {response.status_code} - {response.text}")
             return
