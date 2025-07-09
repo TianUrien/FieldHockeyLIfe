@@ -279,7 +279,7 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
                   <span className="document-icon">📄</span>
                   <span className="document-name">CV/Resume</span>
                   <a 
-                    href={`${BACKEND_URL}/uploads/documents/${player.cv_document}`}
+                    href={`${BACKEND_URL}/api/uploads/documents/${player.cv_document}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="document-link"
