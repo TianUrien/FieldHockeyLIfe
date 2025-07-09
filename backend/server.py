@@ -307,11 +307,11 @@ class Application(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     player_id: str
     player_name: str
-    player_position: str
-    player_location: str
-    player_experience: str
+    player_position: Optional[str] = None  # Made optional for backward compatibility
+    player_location: Optional[str] = None  # Made optional for backward compatibility
+    player_experience: Optional[str] = None  # Made optional for backward compatibility
     vacancy_id: str
-    vacancy_title: str
+    vacancy_title: Optional[str] = None  # Made optional for backward compatibility
     vacancy_position: str
     club_name: str
     # Enhanced application fields
