@@ -209,7 +209,7 @@ function App() {
         {currentView === "club-register" && <ClubRegister onRegister={handleClubRegister} />}
         {currentView === "player-login" && <PlayerLogin onLogin={handlePlayerLogin} />}
         {currentView === "club-login" && <ClubLogin onLogin={handleClubLogin} />}
-        {currentView === "vacancies" && <VacanciesList vacancies={vacancies} currentUser={currentUser} userType={userType} onApply={handleApplication} hasApplied={hasApplied} />}
+        {currentView === "vacancies" && <VacanciesList vacancies={vacancies} currentUser={currentUser} userType={userType} onApply={handleApplication} hasApplied={hasApplied} clubs={clubs} />}
         {currentView === "player-dashboard" && <PlayerDashboard player={currentUser} applications={getPlayerApplications()} onPlayerUpdate={handlePlayerUpdate} />}
         {currentView === "club-dashboard" && <ClubDashboard club={currentUser} vacancies={vacancies.filter(v => v.club_id === currentUser?.id)} applications={getClubApplications()} onCreateVacancy={() => setCurrentView("create-vacancy")} onClubUpdate={handleClubUpdate} />}
         {currentView === "create-vacancy" && <CreateVacancy onSubmit={handleVacancyCreate} />}
