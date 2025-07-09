@@ -371,6 +371,13 @@ const ClubRegister = ({ onRegister }) => {
           required
         />
         <input
+          type="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={(e) => setFormData({...formData, password: e.target.value})}
+          required
+        />
+        <input
           type="text"
           placeholder="Location"
           value={formData.location}
