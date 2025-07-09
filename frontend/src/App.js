@@ -338,6 +338,7 @@ const ClubRegister = ({ onRegister }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
     location: "",
     description: "",
     contact_info: "",
