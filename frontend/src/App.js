@@ -535,6 +535,7 @@ const ClubDashboard = ({ club, vacancies, applications, onCreateVacancy, onClubU
 const CreateVacancy = ({ onSubmit }) => {
   const [formData, setFormData] = useState({
     position: "",
+    title: "",
     description: "",
     requirements: "",
     experience_level: "",
@@ -550,6 +551,13 @@ const CreateVacancy = ({ onSubmit }) => {
     <div className="form-container">
       <h2>Create New Vacancy</h2>
       <form onSubmit={handleSubmit} className="registration-form">
+        <input
+          type="text"
+          placeholder="Job Title"
+          value={formData.title}
+          onChange={(e) => setFormData({...formData, title: e.target.value})}
+          required
+        />
         <select
           value={formData.position}
           onChange={(e) => setFormData({...formData, position: e.target.value})}
