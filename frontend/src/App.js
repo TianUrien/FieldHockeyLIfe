@@ -134,15 +134,28 @@ function App() {
               <>
                 <button 
                   className="nav-btn primary" 
-                  onClick={() => setCurrentView("player-register")}
+                  onClick={() => setCurrentView("player-login")}
                 >
-                  Join as Player
+                  Player Login
                 </button>
                 <button 
                   className="nav-btn secondary" 
+                  onClick={() => setCurrentView("club-login")}
+                >
+                  Club Login
+                </button>
+                <div className="nav-divider">|</div>
+                <button 
+                  className="nav-btn tertiary" 
+                  onClick={() => setCurrentView("player-register")}
+                >
+                  Register as Player
+                </button>
+                <button 
+                  className="nav-btn tertiary" 
                   onClick={() => setCurrentView("club-register")}
                 >
-                  Join as Club
+                  Register as Club
                 </button>
               </>
             ) : (
