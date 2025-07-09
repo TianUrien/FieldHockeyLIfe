@@ -235,8 +235,9 @@ function App() {
         {currentView === "club-login" && <ClubLogin onLogin={handleClubLogin} />}
         {currentView === "vacancies" && <VacanciesList vacancies={vacancies} currentUser={currentUser} userType={userType} onApply={handleApplication} hasApplied={hasApplied} clubs={clubs} />}
         {currentView === "player-dashboard" && <PlayerDashboard player={currentUser} applications={getPlayerApplications()} onPlayerUpdate={handlePlayerUpdate} />}
-        {currentView === "club-dashboard" && <ClubDashboard club={currentUser} vacancies={vacancies.filter(v => v.club_id === currentUser?.id)} applications={getClubApplications()} onCreateVacancy={() => setCurrentView("create-vacancy")} onClubUpdate={handleClubUpdate} />}
+        {currentView === "club-dashboard" && <ClubDashboard club={currentUser} vacancies={vacancies.filter(v => v.club_id === currentUser?.id)} applications={getClubApplications()} onCreateVacancy={() => setCurrentView("create-vacancy")} onClubUpdate={handleClubUpdate} onEditVacancy={(vacancy) => { setEditingVacancy(vacancy); setCurrentView("edit-vacancy"); }} onDeleteVacancy={handleVacancyDelete} />}
         {currentView === "create-vacancy" && <CreateVacancy onSubmit={handleVacancyCreate} />}
+        {currentView === "edit-vacancy" && editingVacancy && <EditVacancy vacancy={editingVacancy} onSubmit={handleVacancyEdit} onCancel={() => { setEditingVacancy(null); setCurrentView("club-dashboard"); }} />}
       </main>
     </div>
   );
