@@ -967,32 +967,144 @@ async def create_application(application: ApplicationCreate):
     
     application_dict = application.dict()
     application_dict["player_name"] = player["name"]
+    application_dict["player_position"] = player["position"]
+    application_dict["player_location"] = player["location"]
+    application_dict["player_experience"] = player["experience_level"]
+    application_dict["vacancy_title"] = vacancy.get("title", vacancy["position"])
     application_dict["vacancy_position"] = vacancy["position"]
     application_dict["club_name"] = vacancy["club_name"]
     
     application_obj = Application(**application_dict)
     await db.applications.insert_one(application_obj.dict())
+    
+    # Increment application count for vacancy
+    await db.vacancies.update_one(
+        {"id": application.vacancy_id},
+        {"$inc": {"applications_count": 1}}
+    )
+    
     return application_obj
 
 @api_router.get("/applications", response_model=List[Application])
-async def get_applications():
-    applications = await db.applications.find().sort("applied_at", -1).to_list(1000)
+async def get_applications(
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    player_id: Optional[str] = None,
+    vacancy_id: Optional[str] = None,
+    limit: int = 100
+):
+    filter_query = {}
+    if status:
+        filter_query["status"] = status
+    if priority:
+        filter_query["priority"] = priority
+    if player_id:
+        filter_query["player_id"] = player_id
+    if vacancy_id:
+        filter_query["vacancy_id"] = vacancy_id
+    
+    applications = await db.applications.find(filter_query).sort("applied_at", -1).limit(limit).to_list(limit)
     return [Application(**application) for application in applications]
 
+@api_router.get("/applications/{application_id}", response_model=Application)
+async def get_application(application_id: str):
+    application = await db.applications.find_one({"id": application_id})
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return Application(**application)
+
+@api_router.put("/applications/{application_id}", response_model=Application)
+async def update_application(application_id: str, application_update: ApplicationUpdate):
+    application = await db.applications.find_one({"id": application_id})
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    # Update only provided fields
+    update_data = {k: v for k, v in application_update.dict().items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow()
+    
+    # Set reviewed_at if status changes from pending
+    if update_data.get("status") and application.get("status") == "pending":
+        update_data["reviewed_at"] = datetime.utcnow()
+    
+    await db.applications.update_one({"id": application_id}, {"$set": update_data})
+    
+    # Return updated application
+    updated_application = await db.applications.find_one({"id": application_id})
+    return Application(**updated_application)
+
 @api_router.get("/players/{player_id}/applications", response_model=List[Application])
-async def get_player_applications(player_id: str):
-    applications = await db.applications.find({"player_id": player_id}).sort("applied_at", -1).to_list(1000)
+async def get_player_applications(player_id: str, status: Optional[str] = None):
+    filter_query = {"player_id": player_id}
+    if status:
+        filter_query["status"] = status
+    
+    applications = await db.applications.find(filter_query).sort("applied_at", -1).to_list(1000)
     return [Application(**application) for application in applications]
 
 @api_router.get("/clubs/{club_id}/applications", response_model=List[Application])
-async def get_club_applications(club_id: str):
+async def get_club_applications(
+    club_id: str,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    vacancy_id: Optional[str] = None,
+    limit: int = 100
+):
     # Get all vacancies for this club
-    vacancies = await db.vacancies.find({"club_id": club_id}).to_list(1000)
+    filter_query = {"club_id": club_id}
+    if vacancy_id:
+        filter_query["id"] = vacancy_id
+    
+    vacancies = await db.vacancies.find(filter_query).to_list(1000)
     vacancy_ids = [vacancy["id"] for vacancy in vacancies]
     
     # Get all applications for these vacancies
-    applications = await db.applications.find({"vacancy_id": {"$in": vacancy_ids}}).sort("applied_at", -1).to_list(1000)
+    app_filter = {"vacancy_id": {"$in": vacancy_ids}}
+    if status:
+        app_filter["status"] = status
+    if priority:
+        app_filter["priority"] = priority
+    
+    applications = await db.applications.find(app_filter).sort("applied_at", -1).limit(limit).to_list(limit)
     return [Application(**application) for application in applications]
+
+@api_router.post("/applications/{application_id}/shortlist")
+async def shortlist_application(application_id: str):
+    """Shortlist an application"""
+    application = await db.applications.find_one({"id": application_id})
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    await db.applications.update_one(
+        {"id": application_id},
+        {"$set": {
+            "status": "shortlisted",
+            "priority": "high",
+            "updated_at": datetime.utcnow(),
+            "reviewed_at": datetime.utcnow()
+        }}
+    )
+    
+    return {"message": "Application shortlisted successfully"}
+
+@api_router.post("/applications/bulk-update")
+async def bulk_update_applications(
+    application_ids: List[str],
+    update_data: ApplicationUpdate
+):
+    """Bulk update multiple applications"""
+    if not application_ids:
+        raise HTTPException(status_code=400, detail="No application IDs provided")
+    
+    update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+    update_dict["updated_at"] = datetime.utcnow()
+    
+    result = await db.applications.update_many(
+        {"id": {"$in": application_ids}},
+        {"$set": update_dict}
+    )
+    
+    return {"message": f"Updated {result.modified_count} applications successfully"}
 
 # Include the router in the main app
 app.include_router(api_router)
