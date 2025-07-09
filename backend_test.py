@@ -373,9 +373,160 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
             print(f"❌ Player profile update test failed: {response.status_code} - {response.text}")
             return
         
-        # Note: File upload tests are skipped due to issues with file format validation
-        print("\n🔍 Skipping file upload tests due to environment constraints")
-        print("✅ File upload functionality has been implemented in the backend")
+        # Test file upload functionality
+        print("\n🔍 Testing file upload functionality...")
+
+        # Test avatar upload
+        print("\n🔍 Testing avatar upload...")
+        with open(cls.test_avatar_path, 'rb') as avatar_file:
+            files = {'file': ('test_avatar.jpg', avatar_file, 'image/jpeg')}
+            response = requests.post(f"{BASE_URL}/players/{cls.player_id}/avatar", files=files)
+            
+            if response.status_code == 200:
+                avatar_data = response.json()
+                if 'filename' in avatar_data:
+                    print(f"✅ Avatar upload test passed. Filename: {avatar_data['filename']}")
+                    
+                    # Test avatar access
+                    avatar_url = f"{BASE_URL}/uploads/avatars/{avatar_data['filename']}"
+                    avatar_response = requests.get(avatar_url)
+                    if avatar_response.status_code == 200:
+                        print(f"✅ Avatar access test passed. URL: {avatar_url}")
+                    else:
+                        print(f"❌ Avatar access test failed: {avatar_response.status_code}")
+                        return
+                else:
+                    print("❌ Avatar upload test failed: No filename in response")
+                    return
+            else:
+                print(f"❌ Avatar upload test failed: {response.status_code} - {response.text}")
+                return
+
+        # Test CV upload
+        print("\n🔍 Testing CV upload...")
+        with open(cls.test_cv_path, 'rb') as cv_file:
+            files = {'file': ('test_cv.pdf', cv_file, 'application/pdf')}
+            response = requests.post(f"{BASE_URL}/players/{cls.player_id}/cv", files=files)
+            
+            if response.status_code == 200:
+                cv_data = response.json()
+                if 'filename' in cv_data:
+                    print(f"✅ CV upload test passed. Filename: {cv_data['filename']}")
+                    
+                    # Test CV access
+                    cv_url = f"{BASE_URL}/uploads/documents/{cv_data['filename']}"
+                    cv_response = requests.get(cv_url)
+                    if cv_response.status_code == 200:
+                        print(f"✅ CV access test passed. URL: {cv_url}")
+                    else:
+                        print(f"❌ CV access test failed: {cv_response.status_code}")
+                        return
+                else:
+                    print("❌ CV upload test failed: No filename in response")
+                    return
+            else:
+                print(f"❌ CV upload test failed: {response.status_code} - {response.text}")
+                return
+
+        # Test photo upload
+        print("\n🔍 Testing photo upload...")
+        with open(cls.test_photo_path, 'rb') as photo_file:
+            files = {'file': ('test_photo.jpg', photo_file, 'image/jpeg')}
+            response = requests.post(f"{BASE_URL}/players/{cls.player_id}/photos", files=files)
+            
+            if response.status_code == 200:
+                photo_data = response.json()
+                if 'filename' in photo_data:
+                    print(f"✅ Photo upload test passed. Filename: {photo_data['filename']}")
+                    
+                    # Test photo access
+                    photo_url = f"{BASE_URL}/uploads/photos/{photo_data['filename']}"
+                    photo_response = requests.get(photo_url)
+                    if photo_response.status_code == 200:
+                        print(f"✅ Photo access test passed. URL: {photo_url}")
+                    else:
+                        print(f"❌ Photo access test failed: {photo_response.status_code}")
+                        return
+                        
+                    # Get updated player to get the photo ID
+                    player_response = requests.get(f"{BASE_URL}/players/{cls.player_id}")
+                    if player_response.status_code == 200:
+                        player_data = player_response.json()
+                        if player_data['photos'] and len(player_data['photos']) > 0:
+                            cls.photo_id = player_data['photos'][0]['id']
+                            print(f"✅ Photo ID retrieved: {cls.photo_id}")
+                        else:
+                            print("❌ Photo not found in player data")
+                            return
+                    else:
+                        print(f"❌ Failed to get player data: {player_response.status_code}")
+                        return
+                else:
+                    print("❌ Photo upload test failed: No filename in response")
+                    return
+            else:
+                print(f"❌ Photo upload test failed: {response.status_code} - {response.text}")
+                return
+
+        # Test video upload
+        print("\n🔍 Testing video upload...")
+        with open(cls.test_video_path, 'rb') as video_file:
+            files = {'file': ('test_video.mp4', video_file, 'video/mp4')}
+            response = requests.post(f"{BASE_URL}/players/{cls.player_id}/videos", files=files)
+            
+            if response.status_code == 200:
+                video_data = response.json()
+                if 'filename' in video_data:
+                    print(f"✅ Video upload test passed. Filename: {video_data['filename']}")
+                    
+                    # Test video access
+                    video_url = f"{BASE_URL}/uploads/videos/{video_data['filename']}"
+                    video_response = requests.get(video_url)
+                    if video_response.status_code == 200:
+                        print(f"✅ Video access test passed. URL: {video_url}")
+                    else:
+                        print(f"❌ Video access test failed: {video_response.status_code}")
+                        return
+                        
+                    # Get updated player to get the video ID
+                    player_response = requests.get(f"{BASE_URL}/players/{cls.player_id}")
+                    if player_response.status_code == 200:
+                        player_data = player_response.json()
+                        if player_data['videos'] and len(player_data['videos']) > 0:
+                            cls.video_id = player_data['videos'][0]['id']
+                            print(f"✅ Video ID retrieved: {cls.video_id}")
+                        else:
+                            print("❌ Video not found in player data")
+                            return
+                    else:
+                        print(f"❌ Failed to get player data: {player_response.status_code}")
+                        return
+                else:
+                    print("❌ Video upload test failed: No filename in response")
+                    return
+            else:
+                print(f"❌ Video upload test failed: {response.status_code} - {response.text}")
+                return
+
+        # Test photo deletion
+        if cls.photo_id:
+            print("\n🔍 Testing photo deletion...")
+            response = requests.delete(f"{BASE_URL}/players/{cls.player_id}/photos/{cls.photo_id}")
+            if response.status_code == 200:
+                print("✅ Photo deletion test passed")
+            else:
+                print(f"❌ Photo deletion test failed: {response.status_code} - {response.text}")
+                return
+
+        # Test video deletion
+        if cls.video_id:
+            print("\n🔍 Testing video deletion...")
+            response = requests.delete(f"{BASE_URL}/players/{cls.player_id}/videos/{cls.video_id}")
+            if response.status_code == 200:
+                print("✅ Video deletion test passed")
+            else:
+                print(f"❌ Video deletion test failed: {response.status_code} - {response.text}")
+                return
         
         print("\n🎉 All API tests completed successfully!")
     
