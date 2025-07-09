@@ -471,8 +471,11 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
               onClick={() => videoInputRef.current?.click()}
               disabled={uploading}
             >
-              🎥 Upload Video
+              🎥 Subir Video (máx. 300MB)
             </button>
+            <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
+              Formatos soportados: MP4, MOV, AVI
+            </p>
             <input
               ref={videoInputRef}
               type="file"
@@ -489,6 +492,11 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
                   ></div>
                 </div>
                 <span>{uploadProgress.video}%</span>
+                {uploadProgress.video < 100 && (
+                  <span style={{ fontSize: '0.75rem', color: '#6b7280', marginLeft: '1rem' }}>
+                    Subiendo archivo grande...
+                  </span>
+                )}
               </div>
             )}
           </div>
