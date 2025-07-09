@@ -596,7 +596,6 @@ async def delete_video(player_id: str, video_id: str):
     
     return {"message": "Video deleted successfully"}
 
-# Club routes
 @api_router.post("/clubs", response_model=Club)
 async def create_club(club: ClubCreate):
     # Check if email already exists
@@ -611,6 +610,9 @@ async def create_club(club: ClubCreate):
     club_dict = club.dict()
     club_dict.pop("password")  # Remove plain password
     club_dict["password_hash"] = password_hash
+    club_dict["gallery_images"] = []
+    club_dict["videos"] = []
+    club_dict["social_media"] = {}
     
     club_obj = Club(**{k: v for k, v in club_dict.items() if k != "password_hash"})
     
@@ -634,6 +636,170 @@ async def get_club(club_id: str):
         raise HTTPException(status_code=404, detail="Club not found")
     club.pop("password_hash", None)
     return Club(**club)
+
+@api_router.put("/clubs/{club_id}", response_model=Club)
+async def update_club(club_id: str, club_update: ClubUpdate):
+    club = await db.clubs.find_one({"id": club_id})
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Update only provided fields
+    update_data = {k: v for k, v in club_update.dict().items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow()
+    
+    await db.clubs.update_one({"id": club_id}, {"$set": update_data})
+    
+    # Return updated club
+    updated_club = await db.clubs.find_one({"id": club_id})
+    updated_club.pop("password_hash", None)
+    return Club(**updated_club)
+
+# Club file upload routes
+@api_router.post("/clubs/{club_id}/logo")
+async def upload_club_logo(club_id: str, file: UploadFile = File(...)):
+    club = await db.clubs.find_one({"id": club_id})
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Save file
+    filename = save_uploaded_file(file, "logos", MAX_AVATAR_SIZE, ALLOWED_IMAGE_TYPES)
+    
+    # Update club with new logo
+    await db.clubs.update_one(
+        {"id": club_id}, 
+        {"$set": {"logo": filename, "updated_at": datetime.utcnow()}}
+    )
+    
+    return {"filename": filename, "message": "Logo uploaded successfully"}
+
+@api_router.post("/clubs/{club_id}/gallery")
+async def upload_club_gallery_image(club_id: str, file: UploadFile = File(...)):
+    club = await db.clubs.find_one({"id": club_id})
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Save file
+    filename = save_uploaded_file(file, "club_gallery", MAX_PHOTO_SIZE, ALLOWED_IMAGE_TYPES)
+    
+    # Get file size
+    file.file.seek(0)
+    file_content = file.file.read()
+    file_size = len(file_content)
+    
+    # Create media file object
+    media_file = MediaFile(
+        filename=filename,
+        original_name=file.filename,
+        file_type=file.content_type or "image/jpeg",
+        file_size=file_size
+    )
+    
+    # Add to club's gallery
+    await db.clubs.update_one(
+        {"id": club_id}, 
+        {"$push": {"gallery_images": media_file.dict()}, "$set": {"updated_at": datetime.utcnow()}}
+    )
+    
+    return {"filename": filename, "message": "Gallery image uploaded successfully"}
+
+@api_router.post("/clubs/{club_id}/videos")
+async def upload_club_video(club_id: str, file: UploadFile = File(...)):
+    club = await db.clubs.find_one({"id": club_id})
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Save file
+    filename = save_uploaded_file(file, "club_videos", MAX_VIDEO_SIZE, ALLOWED_VIDEO_TYPES)
+    
+    # Determine file type based on extension
+    file_extension = Path(file.filename).suffix.lower()
+    if file_extension == '.mp4':
+        file_type = 'video/mp4'
+    elif file_extension == '.mov':
+        file_type = 'video/quicktime'
+    elif file_extension == '.avi':
+        file_type = 'video/x-msvideo'
+    else:
+        file_type = file.content_type or "video/mp4"
+    
+    # Get file size
+    file.file.seek(0)
+    file_content = file.file.read()
+    file_size = len(file_content)
+    
+    # Create media file object
+    media_file = MediaFile(
+        filename=filename,
+        original_name=file.filename,
+        file_type=file_type,
+        file_size=file_size
+    )
+    
+    # Add to club's videos
+    await db.clubs.update_one(
+        {"id": club_id}, 
+        {"$push": {"videos": media_file.dict()}, "$set": {"updated_at": datetime.utcnow()}}
+    )
+    
+    return {"filename": filename, "message": "Video uploaded successfully"}
+
+@api_router.delete("/clubs/{club_id}/gallery/{image_id}")
+async def delete_club_gallery_image(club_id: str, image_id: str):
+    club = await db.clubs.find_one({"id": club_id})
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Find and remove image
+    image_to_remove = None
+    for image in club.get("gallery_images", []):
+        if image["id"] == image_id:
+            image_to_remove = image
+            break
+    
+    if not image_to_remove:
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    # Remove file from filesystem
+    file_path = UPLOAD_DIR / "club_gallery" / image_to_remove["filename"]
+    if file_path.exists():
+        file_path.unlink()
+    
+    # Remove from database
+    await db.clubs.update_one(
+        {"id": club_id}, 
+        {"$pull": {"gallery_images": {"id": image_id}}, "$set": {"updated_at": datetime.utcnow()}}
+    )
+    
+    return {"message": "Gallery image deleted successfully"}
+
+@api_router.delete("/clubs/{club_id}/videos/{video_id}")
+async def delete_club_video(club_id: str, video_id: str):
+    club = await db.clubs.find_one({"id": club_id})
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Find and remove video
+    video_to_remove = None
+    for video in club.get("videos", []):
+        if video["id"] == video_id:
+            video_to_remove = video
+            break
+    
+    if not video_to_remove:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Remove file from filesystem
+    file_path = UPLOAD_DIR / "club_videos" / video_to_remove["filename"]
+    if file_path.exists():
+        file_path.unlink()
+    
+    # Remove from database
+    await db.clubs.update_one(
+        {"id": club_id}, 
+        {"$pull": {"videos": {"id": video_id}}, "$set": {"updated_at": datetime.utcnow()}}
+    )
+    
+    return {"message": "Club video deleted successfully"}
 
 # Vacancy routes
 @api_router.post("/vacancies", response_model=Vacancy)
