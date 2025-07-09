@@ -16,6 +16,8 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [userType, setUserType] = useState(null); // 'player' or 'club'
 
+  const [editingVacancy, setEditingVacancy] = useState(null);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -34,6 +36,28 @@ function App() {
       setApplications(applicationsRes.data);
     } catch (error) {
       console.error("Error loading data:", error);
+    }
+  };
+
+  const handleVacancyEdit = async (vacancyData) => {
+    try {
+      await axios.put(`${API}/vacancies/${editingVacancy.id}`, vacancyData);
+      loadData();
+      setEditingVacancy(null);
+      setCurrentView('club-dashboard');
+    } catch (error) {
+      alert(error.response?.data?.detail || "Error updating vacancy");
+    }
+  };
+
+  const handleVacancyDelete = async (vacancyId) => {
+    if (!confirm("Are you sure you want to delete this vacancy? This action cannot be undone.")) return;
+    
+    try {
+      await axios.delete(`${API}/vacancies/${vacancyId}`);
+      loadData();
+    } catch (error) {
+      alert(error.response?.data?.detail || "Error deleting vacancy");
     }
   };
 
