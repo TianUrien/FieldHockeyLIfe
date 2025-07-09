@@ -40,7 +40,19 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(
+    # Increase file upload size limit to 300MB
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# Add middleware to handle large file uploads
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+
+# Configure upload size limit
+import uvicorn
+uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.access"]["propagate"] = False
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
