@@ -393,10 +393,20 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
                     src={`${BACKEND_URL}/api/uploads/videos/${video.filename}`} 
                     className="media-thumbnail"
                     controls
+                    preload="metadata"
+                    onError={(e) => {
+                      console.error('Video load error:', e);
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
                   />
+                  <div className="video-error" style={{ display: 'none', padding: '2rem', textAlign: 'center', color: '#ef4444' }}>
+                    Video cannot be played. <a href={`${BACKEND_URL}/api/uploads/videos/${video.filename}`} target="_blank" rel="noopener noreferrer">Download to view</a>
+                  </div>
                   <div className="media-info">
                     <span className="media-name">{video.original_name}</span>
                     <span className="media-size">{formatFileSize(video.file_size)}</span>
+                    <span className="media-type">{video.file_type}</span>
                   </div>
                   <button 
                     className="delete-media-btn"
