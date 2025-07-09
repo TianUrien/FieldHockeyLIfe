@@ -407,9 +407,10 @@ body {
   gap: var(--space-6);
 }
 
+/* Enhanced Vacancy Styles */
 .vacancy-card {
   background: var(--surface-white);
-  padding: var(--space-8);
+  padding: var(--space-6);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
@@ -421,17 +422,54 @@ body {
   box-shadow: var(--shadow-md);
 }
 
-.vacancy-card h3 {
+.vacancy-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.club-logo-small {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.club-logo-image {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 2px solid var(--border-light);
+}
+
+.club-logo-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-md);
+  background: var(--background-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  border: 2px solid var(--border-light);
+}
+
+.vacancy-title-section {
+  flex: 1;
+}
+
+.vacancy-title-section h3 {
   font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: var(--space-3);
+  margin: 0 0 var(--space-1) 0;
 }
 
 .vacancy-card .club-name {
   font-weight: 600;
   color: var(--success-green);
-  margin-bottom: var(--space-2);
+  margin: 0;
   font-size: var(--font-size-base);
 }
 
@@ -464,6 +502,118 @@ body {
   color: var(--text-tertiary);
   font-size: var(--font-size-xs);
   margin-bottom: var(--space-6);
+}
+
+/* Enhanced Vacancy Item for Club Dashboard */
+.vacancy-item-enhanced {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  background: var(--surface-white);
+}
+
+.vacancy-item-enhanced:hover {
+  border-color: var(--primary-blue);
+  box-shadow: var(--shadow-sm);
+}
+
+.vacancy-info {
+  flex: 1;
+}
+
+.vacancy-info p {
+  margin-bottom: var(--space-2);
+}
+
+.vacancy-info p:last-child {
+  margin-bottom: 0;
+}
+
+.vacancy-status {
+  font-weight: 600;
+  text-transform: capitalize;
+  font-size: var(--font-size-sm);
+}
+
+.vacancy-status.active {
+  color: var(--success-green);
+}
+
+.vacancy-status.paused {
+  color: var(--warning-orange);
+}
+
+.vacancy-status.draft {
+  color: var(--text-tertiary);
+}
+
+.vacancy-status.closed {
+  color: var(--error-red);
+}
+
+.vacancy-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.edit-vacancy-btn,
+.delete-vacancy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-vacancy-btn {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.edit-vacancy-btn:hover {
+  background: var(--dark-blue);
+  transform: scale(1.05);
+}
+
+.delete-vacancy-btn {
+  background: var(--error-red);
+  color: white;
+}
+
+.delete-vacancy-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-top: var(--space-6);
+}
+
+.cancel-btn {
+  padding: var(--space-3) var(--space-6);
+  background: var(--background-gray);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: var(--border-light);
 }
 
 .apply-btn {
