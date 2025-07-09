@@ -89,20 +89,23 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
             "location": "Test City"
         }
         
-        response = requests.post(f"{BASE_URL}/vacancies", json=vacancy_data)
-        print(f"Vacancy creation response: {response.status_code}")
         try:
-            print(f"Response content: {response.json()}")
-        except:
-            print(f"Raw response: {response.text}")
-        self.assertEqual(response.status_code, 200)
-        
-        # Store vacancy ID for later tests
-        vacancy = response.json()
-        self.vacancy_id = vacancy["id"]
-        self.assertEqual(vacancy["position"], vacancy_data["position"])
-        self.assertEqual(vacancy["club_id"], self.club_id)
-        print(f"✅ Vacancy creation test passed. Vacancy ID: {self.vacancy_id}")
+            print(f"Sending vacancy data: {vacancy_data}")
+            response = requests.post(f"{BASE_URL}/vacancies", json=vacancy_data)
+            print(f"Vacancy creation response status: {response.status_code}")
+            print(f"Response content: {response.text}")
+            
+            response.raise_for_status()  # Raise an exception for 4XX/5XX responses
+            
+            # Store vacancy ID for later tests
+            vacancy = response.json()
+            self.vacancy_id = vacancy["id"]
+            self.assertEqual(vacancy["position"], vacancy_data["position"])
+            self.assertEqual(vacancy["club_id"], self.club_id)
+            print(f"✅ Vacancy creation test passed. Vacancy ID: {self.vacancy_id}")
+        except Exception as e:
+            print(f"❌ Vacancy creation test failed: {str(e)}")
+            self.fail(f"Vacancy creation failed: {str(e)}")
 
     def test_05_get_vacancies(self):
         """Test getting all vacancies"""
