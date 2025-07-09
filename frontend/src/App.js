@@ -450,17 +450,12 @@ const VacanciesList = ({ vacancies, currentUser, userType, onApply, hasApplied }
   </div>
 );
 
-const PlayerDashboard = ({ player, applications }) => (
+const PlayerDashboard = ({ player, applications, onPlayerUpdate }) => (
   <div className="dashboard-container">
     <h2>Player Dashboard</h2>
     <div className="dashboard-grid">
-      <div className="profile-card">
-        <h3>Your Profile</h3>
-        <p><strong>Name:</strong> {player.name}</p>
-        <p><strong>Position:</strong> {player.position}</p>
-        <p><strong>Experience:</strong> {player.experience_level}</p>
-        <p><strong>Location:</strong> {player.location}</p>
-        {player.bio && <p><strong>Bio:</strong> {player.bio}</p>}
+      <div className="full-width-section">
+        <PlayerProfile player={player} onPlayerUpdate={onPlayerUpdate} />
       </div>
       
       <div className="applications-card">
