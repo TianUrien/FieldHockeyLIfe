@@ -31,6 +31,8 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         cls.test_cv_path = "/app/tests/test_cv.pdf"
         cls.test_photo_path = "/app/tests/test_photo.jpg"
         cls.test_video_path = "/app/tests/test_video.mp4"
+        cls.test_logo_path = "/app/tests/test_logo.jpg"
+        cls.test_gallery_path = "/app/tests/test_gallery.jpg"
         
         # Create test files if they don't exist
         cls.create_test_files()
