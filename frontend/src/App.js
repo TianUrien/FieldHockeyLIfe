@@ -52,8 +52,8 @@ function App() {
       const response = await axios.post(`${API}/clubs`, clubData);
       setCurrentUser(response.data);
       setUserType('club');
-      setCurrentView('club-dashboard');
       loadData();
+      setCurrentView('club-dashboard');
     } catch (error) {
       alert(error.response?.data?.detail || "Error registering club");
     }
