@@ -715,36 +715,89 @@ const PlayerLogin = ({ onLogin }) => {
   );
 };
 
-const ClubLogin = ({ onLogin }) => {
+const EditVacancy = ({ vacancy, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
-    email: "",
-    password: ""
+    position: vacancy.position || "",
+    title: vacancy.title || "",
+    description: vacancy.description || "",
+    requirements: vacancy.requirements || "",
+    experience_level: vacancy.experience_level || "",
+    location: vacancy.location || "",
+    status: vacancy.status || "active"
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onLogin(formData);
+    onSubmit(formData);
   };
 
   return (
     <div className="form-container">
-      <h2>Club Login</h2>
+      <h2>Edit Vacancy</h2>
       <form onSubmit={handleSubmit} className="registration-form">
         <input
-          type="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={(e) => setFormData({...formData, email: e.target.value})}
+          type="text"
+          placeholder="Job Title"
+          value={formData.title}
+          onChange={(e) => setFormData({...formData, title: e.target.value})}
           required
         />
+        <select
+          value={formData.position}
+          onChange={(e) => setFormData({...formData, position: e.target.value})}
+          required
+        >
+          <option value="">Select Position</option>
+          <option value="Forward">Forward</option>
+          <option value="Midfielder">Midfielder</option>
+          <option value="Defender">Defender</option>
+          <option value="Goalkeeper">Goalkeeper</option>
+        </select>
+        <select
+          value={formData.experience_level}
+          onChange={(e) => setFormData({...formData, experience_level: e.target.value})}
+          required
+        >
+          <option value="">Select Experience Level</option>
+          <option value="Beginner">Beginner</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Advanced">Advanced</option>
+          <option value="Professional">Professional</option>
+        </select>
         <input
-          type="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={(e) => setFormData({...formData, password: e.target.value})}
+          type="text"
+          placeholder="Location"
+          value={formData.location}
+          onChange={(e) => setFormData({...formData, location: e.target.value})}
           required
         />
-        <button type="submit" className="submit-btn">Login</button>
+        <select
+          value={formData.status}
+          onChange={(e) => setFormData({...formData, status: e.target.value})}
+          required
+        >
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="draft">Draft</option>
+          <option value="closed">Closed</option>
+        </select>
+        <textarea
+          placeholder="Position Description"
+          value={formData.description}
+          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          required
+        />
+        <textarea
+          placeholder="Requirements (optional)"
+          value={formData.requirements}
+          onChange={(e) => setFormData({...formData, requirements: e.target.value})}
+        />
+        <div className="form-actions">
+          <button type="button" className="cancel-btn" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit" className="submit-btn">Update Vacancy</button>
+        </div>
       </form>
     </div>
   );
