@@ -2,6 +2,7 @@ import requests
 import unittest
 import uuid
 import time
+import os
 from datetime import datetime
 
 # Use the public endpoint from the frontend .env file
@@ -21,9 +22,45 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         cls.club_id = None
         cls.vacancy_id = None
         cls.application_id = None
+        cls.photo_id = None
+        cls.video_id = None
+        
+        # Test file paths
+        cls.test_avatar_path = "/app/tests/test_avatar.jpg"
+        cls.test_cv_path = "/app/tests/test_cv.pdf"
+        cls.test_photo_path = "/app/tests/test_photo.jpg"
+        cls.test_video_path = "/app/tests/test_video.mp4"
+        
+        # Create test files if they don't exist
+        cls.create_test_files()
         
         # Run the tests in sequence
         cls.test_sequence()
+    
+    @classmethod
+    def create_test_files(cls):
+        """Create test files for upload testing"""
+        os.makedirs("/app/tests", exist_ok=True)
+        
+        # Create a simple test image file
+        if not os.path.exists(cls.test_avatar_path):
+            with open(cls.test_avatar_path, "wb") as f:
+                f.write(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)  # Simple PNG header
+        
+        # Create a simple test PDF file
+        if not os.path.exists(cls.test_cv_path):
+            with open(cls.test_cv_path, "wb") as f:
+                f.write(b"%PDF-1.4\n" + b"\x00" * 100)  # Simple PDF header
+        
+        # Create a simple test photo file
+        if not os.path.exists(cls.test_photo_path):
+            with open(cls.test_photo_path, "wb") as f:
+                f.write(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)  # Simple PNG header
+        
+        # Create a simple test video file
+        if not os.path.exists(cls.test_video_path):
+            with open(cls.test_video_path, "wb") as f:
+                f.write(b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 100)  # Simple MP4 header
     
     @classmethod
     def test_sequence(cls):
