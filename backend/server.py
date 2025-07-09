@@ -45,8 +45,26 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Serve uploaded files through the API router
-app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+# Custom StaticFiles to handle video content properly
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
+from starlette.requests import Request
+import os
+
+class VideoStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        try:
+            response = await super().get_response(path, scope)
+            if path.endswith(('.mp4', '.mov', '.avi')):
+                # Set proper headers for video files
+                response.headers["Accept-Ranges"] = "bytes"
+                response.headers["Cache-Control"] = "no-cache"
+            return response
+        except Exception:
+            return await super().get_response(path, scope)
+
+# Serve uploaded files through the API router with video support
+app.mount("/api/uploads", VideoStaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 
 # Helper functions
