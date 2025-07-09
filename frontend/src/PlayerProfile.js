@@ -434,7 +434,7 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
             <input
               ref={videoInputRef}
               type="file"
-              accept="video/*"
+              accept="video/mp4,video/mov,video/avi,video/quicktime,.mp4,.mov,.avi"
               onChange={(e) => handleFileUpload(e.target.files[0], 'videos', 'video')}
               style={{ display: 'none' }}
             />
