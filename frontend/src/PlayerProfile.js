@@ -102,7 +102,7 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
           <div className="avatar-container">
             {player.avatar ? (
               <img 
-                src={`${BACKEND_URL}/uploads/avatars/${player.avatar}`} 
+                src={`${BACKEND_URL}/api/uploads/avatars/${player.avatar}`} 
                 alt="Profile" 
                 className="avatar-image"
               />
