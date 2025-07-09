@@ -552,7 +552,10 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
                 "instagram": "testhockeyclub",
                 "facebook": "TestHockeyClub",
                 "twitter": "TestHockeyClub"
-            }
+            },
+            "website": "https://testhockeyclub.com",
+            "phone": "+44 123 456 7890",
+            "club_type": "Professional"
         }
         
         response = requests.put(f"{BASE_URL}/clubs/{cls.club_id}", json=update_data)
@@ -560,7 +563,10 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
             club = response.json()
             if (club["achievements"] == update_data["achievements"] and 
                 club["club_story"] == update_data["club_story"] and
-                club["facilities"] == update_data["facilities"]):
+                club["facilities"] == update_data["facilities"] and
+                club["website"] == update_data["website"] and
+                club["phone"] == update_data["phone"] and
+                club["club_type"] == update_data["club_type"]):
                 print("✅ Club profile update with enhanced fields test passed")
             else:
                 print("❌ Club profile update with enhanced fields test failed: Profile not updated correctly")
