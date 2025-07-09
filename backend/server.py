@@ -9,10 +9,14 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 import uuid
 from datetime import datetime
+from passlib.context import CryptContext
 
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -24,6 +28,14 @@ app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+
+# Helper functions
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
 
 
 # Define Models
@@ -41,11 +53,16 @@ class Player(BaseModel):
 class PlayerCreate(BaseModel):
     name: str
     email: str
+    password: str
     position: str
     experience_level: str
     location: str
     bio: Optional[str] = None
     age: Optional[int] = None
+
+class PlayerLogin(BaseModel):
+    email: str
+    password: str
 
 class Club(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -60,10 +77,15 @@ class Club(BaseModel):
 class ClubCreate(BaseModel):
     name: str
     email: str
+    password: str
     location: str
     description: Optional[str] = None
     contact_info: Optional[str] = None
     established_year: Optional[int] = None
+
+class ClubLogin(BaseModel):
+    email: str
+    password: str
 
 class Vacancy(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -103,6 +125,37 @@ class ApplicationCreate(BaseModel):
 async def root():
     return {"message": "Field Hockey Connect API"}
 
+# Authentication routes
+@api_router.post("/players/login", response_model=Player)
+async def login_player(credentials: PlayerLogin):
+    # Find player by email
+    player_data = await db.players.find_one({"email": credentials.email})
+    if not player_data:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Verify password
+    if not verify_password(credentials.password, player_data.get("password_hash")):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Remove password_hash from response
+    player_data.pop("password_hash", None)
+    return Player(**player_data)
+
+@api_router.post("/clubs/login", response_model=Club)
+async def login_club(credentials: ClubLogin):
+    # Find club by email
+    club_data = await db.clubs.find_one({"email": credentials.email})
+    if not club_data:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Verify password
+    if not verify_password(credentials.password, club_data.get("password_hash")):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Remove password_hash from response
+    club_data.pop("password_hash", None)
+    return Club(**club_data)
+
 # Player routes
 @api_router.post("/players", response_model=Player)
 async def create_player(player: PlayerCreate):
@@ -111,14 +164,27 @@ async def create_player(player: PlayerCreate):
     if existing_player:
         raise HTTPException(status_code=400, detail="Email already registered")
     
+    # Hash password
+    password_hash = get_password_hash(player.password)
+    
+    # Create player data
     player_dict = player.dict()
-    player_obj = Player(**player_dict)
-    await db.players.insert_one(player_obj.dict())
+    player_dict.pop("password")  # Remove plain password
+    player_dict["password_hash"] = password_hash
+    
+    player_obj = Player(**{k: v for k, v in player_dict.items() if k != "password_hash"})
+    
+    # Save to database with password hash
+    await db.players.insert_one({**player_obj.dict(), "password_hash": password_hash})
+    
     return player_obj
 
 @api_router.get("/players", response_model=List[Player])
 async def get_players():
     players = await db.players.find().to_list(1000)
+    # Remove password_hash from all players
+    for player in players:
+        player.pop("password_hash", None)
     return [Player(**player) for player in players]
 
 @api_router.get("/players/{player_id}", response_model=Player)
@@ -126,6 +192,7 @@ async def get_player(player_id: str):
     player = await db.players.find_one({"id": player_id})
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
+    player.pop("password_hash", None)
     return Player(**player)
 
 # Club routes
@@ -136,14 +203,27 @@ async def create_club(club: ClubCreate):
     if existing_club:
         raise HTTPException(status_code=400, detail="Email already registered")
     
+    # Hash password
+    password_hash = get_password_hash(club.password)
+    
+    # Create club data
     club_dict = club.dict()
-    club_obj = Club(**club_dict)
-    await db.clubs.insert_one(club_obj.dict())
+    club_dict.pop("password")  # Remove plain password
+    club_dict["password_hash"] = password_hash
+    
+    club_obj = Club(**{k: v for k, v in club_dict.items() if k != "password_hash"})
+    
+    # Save to database with password hash
+    await db.clubs.insert_one({**club_obj.dict(), "password_hash": password_hash})
+    
     return club_obj
 
 @api_router.get("/clubs", response_model=List[Club])
 async def get_clubs():
     clubs = await db.clubs.find().to_list(1000)
+    # Remove password_hash from all clubs
+    for club in clubs:
+        club.pop("password_hash", None)
     return [Club(**club) for club in clubs]
 
 @api_router.get("/clubs/{club_id}", response_model=Club)
@@ -151,6 +231,7 @@ async def get_club(club_id: str):
     club = await db.clubs.find_one({"id": club_id})
     if not club:
         raise HTTPException(status_code=404, detail="Club not found")
+    club.pop("password_hash", None)
     return Club(**club)
 
 # Vacancy routes
