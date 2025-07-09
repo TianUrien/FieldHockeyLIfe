@@ -125,8 +125,9 @@ function App() {
     loadData();
   };
 
-  const hasApplied = (vacancyId) => {
-    return applications.some(app => app.player_id === currentUser?.id && app.vacancy_id === vacancyId);
+  const handleClubUpdate = (updatedClub) => {
+    setCurrentUser(updatedClub);
+    loadData();
   };
 
   return (
