@@ -119,8 +119,9 @@ function App() {
     });
   };
 
-  const hasApplied = (vacancyId) => {
-    return applications.some(app => app.player_id === currentUser?.id && app.vacancy_id === vacancyId);
+  const handlePlayerUpdate = (updatedPlayer) => {
+    setCurrentUser(updatedPlayer);
+    loadData();
   };
 
   return (
