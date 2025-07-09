@@ -90,6 +90,11 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         }
         
         response = requests.post(f"{BASE_URL}/vacancies", json=vacancy_data)
+        print(f"Vacancy creation response: {response.status_code}")
+        try:
+            print(f"Response content: {response.json()}")
+        except:
+            print(f"Raw response: {response.text}")
         self.assertEqual(response.status_code, 200)
         
         # Store vacancy ID for later tests
