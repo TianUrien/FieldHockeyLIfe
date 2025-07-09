@@ -394,19 +394,44 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
                     className="media-thumbnail"
                     controls
                     preload="metadata"
+                    muted
+                    playsInline
+                    style={{ backgroundColor: '#000' }}
                     onError={(e) => {
                       console.error('Video load error:', e);
+                      console.log('Video source:', e.target.src);
                       e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'block';
+                      e.target.parentNode.querySelector('.video-error').style.display = 'block';
                     }}
+                    onLoadStart={() => console.log('Video loading started')}
+                    onCanPlay={() => console.log('Video can play')}
                   />
-                  <div className="video-error" style={{ display: 'none', padding: '2rem', textAlign: 'center', color: '#ef4444' }}>
-                    Video cannot be played. <a href={`${BACKEND_URL}/api/uploads/videos/${video.filename}`} target="_blank" rel="noopener noreferrer">Download to view</a>
+                  <div className="video-error" style={{ 
+                    display: 'none', 
+                    padding: '2rem', 
+                    textAlign: 'center', 
+                    color: '#ef4444',
+                    backgroundColor: '#fef2f2',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #fecaca'
+                  }}>
+                    <p>Video format not supported by browser</p>
+                    <a 
+                      href={`${BACKEND_URL}/api/uploads/videos/${video.filename}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="download-link"
+                      style={{ color: '#3b82f6', textDecoration: 'underline' }}
+                    >
+                      Download video to view
+                    </a>
                   </div>
                   <div className="media-info">
                     <span className="media-name">{video.original_name}</span>
                     <span className="media-size">{formatFileSize(video.file_size)}</span>
-                    <span className="media-type">{video.file_type}</span>
+                    <span className="media-type" style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                      {video.file_type}
+                    </span>
                   </div>
                   <button 
                     className="delete-media-btn"
