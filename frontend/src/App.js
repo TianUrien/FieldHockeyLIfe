@@ -426,32 +426,58 @@ const ClubRegister = ({ onRegister }) => {
   );
 };
 
-const VacanciesList = ({ vacancies, currentUser, userType, onApply, hasApplied }) => (
+const VacanciesList = ({ vacancies, currentUser, userType, onApply, hasApplied, clubs }) => (
   <div className="vacancies-container">
     <h2>Available Opportunities</h2>
     <div className="vacancies-grid">
-      {vacancies.map(vacancy => (
-        <div key={vacancy.id} className="vacancy-card">
-          <h3>{vacancy.position}</h3>
-          <p className="club-name">{vacancy.club_name}</p>
-          <p className="location">{vacancy.location}</p>
-          <p className="experience">{vacancy.experience_level} level</p>
-          <p className="description">{vacancy.description}</p>
-          {vacancy.requirements && (
-            <p className="requirements">Requirements: {vacancy.requirements}</p>
-          )}
-          <p className="posted-date">Posted: {new Date(vacancy.created_at).toLocaleDateString()}</p>
-          {currentUser && userType === 'player' && (
-            <button 
-              className={`apply-btn ${hasApplied(vacancy.id) ? 'applied' : ''}`}
-              onClick={() => onApply(vacancy.id)}
-              disabled={hasApplied(vacancy.id)}
-            >
-              {hasApplied(vacancy.id) ? 'Applied' : 'Apply Now'}
-            </button>
-          )}
-        </div>
-      ))}
+      {vacancies.map(vacancy => {
+        // Find the club for this vacancy to get the logo
+        const club = clubs.find(c => c.id === vacancy.club_id);
+        
+        return (
+          <div key={vacancy.id} className="vacancy-card">
+            <div className="vacancy-header">
+              <div className="club-logo-small">
+                {club?.logo ? (
+                  <img 
+                    src={`${BACKEND_URL}/api/uploads/logos/${club.logo}`} 
+                    alt={`${vacancy.club_name} logo`}
+                    className="club-logo-image"
+                  />
+                ) : (
+                  <div className="club-logo-placeholder">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21,15 16,10 5,21"></polyline>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div className="vacancy-title-section">
+                <h3>{vacancy.title || vacancy.position}</h3>
+                <p className="club-name">{vacancy.club_name}</p>
+              </div>
+            </div>
+            <p className="location">{vacancy.location}</p>
+            <p className="experience">{vacancy.experience_level} level</p>
+            <p className="description">{vacancy.description}</p>
+            {vacancy.requirements && (
+              <p className="requirements">Requirements: {vacancy.requirements}</p>
+            )}
+            <p className="posted-date">Posted: {new Date(vacancy.created_at).toLocaleDateString()}</p>
+            {currentUser && userType === 'player' && (
+              <button 
+                className={`apply-btn ${hasApplied(vacancy.id) ? 'applied' : ''}`}
+                onClick={() => onApply(vacancy.id)}
+                disabled={hasApplied(vacancy.id)}
+              >
+                {hasApplied(vacancy.id) ? 'Applied' : 'Apply Now'}
+              </button>
+            )}
+          </div>
+        );
+      })}
     </div>
   </div>
 );
