@@ -249,6 +249,7 @@ const PlayerRegister = ({ onRegister }) => {
     name: "",
     email: "",
     password: "",
+    country: "",
     position: "",
     experience_level: "",
     location: "",
