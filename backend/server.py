@@ -198,7 +198,20 @@ class Club(BaseModel):
     description: Optional[str] = None
     contact_info: Optional[str] = None
     established_year: Optional[int] = None
+    # Enhanced club profile fields
+    logo: Optional[str] = None  # logo filename
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    club_type: Optional[str] = None  # "Professional", "Amateur", "Youth", "University"
+    league: Optional[str] = None
+    achievements: Optional[str] = None
+    club_story: Optional[str] = None
+    facilities: Optional[str] = None
+    social_media: Optional[dict] = None  # {"instagram": "", "facebook": "", "twitter": ""}
+    gallery_images: List[MediaFile] = []
+    videos: List[MediaFile] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class ClubCreate(BaseModel):
     name: str
@@ -208,6 +221,25 @@ class ClubCreate(BaseModel):
     description: Optional[str] = None
     contact_info: Optional[str] = None
     established_year: Optional[int] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    club_type: Optional[str] = None
+    league: Optional[str] = None
+
+class ClubUpdate(BaseModel):
+    name: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    contact_info: Optional[str] = None
+    established_year: Optional[int] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    club_type: Optional[str] = None
+    league: Optional[str] = None
+    achievements: Optional[str] = None
+    club_story: Optional[str] = None
+    facilities: Optional[str] = None
+    social_media: Optional[dict] = None
 
 class ClubLogin(BaseModel):
     email: str
