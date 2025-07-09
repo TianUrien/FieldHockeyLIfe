@@ -124,6 +124,10 @@ function App() {
     loadData();
   };
 
+  const hasApplied = (vacancyId) => {
+    return applications.some(app => app.player_id === currentUser?.id && app.vacancy_id === vacancyId);
+  };
+
   return (
     <div className="App">
       <nav className="navbar">
