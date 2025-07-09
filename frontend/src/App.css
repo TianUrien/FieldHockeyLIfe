@@ -359,8 +359,12 @@ body {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: 1fr;
   gap: 2rem;
+}
+
+.full-width-section {
+  grid-column: 1 / -1;
 }
 
 .profile-card,
