@@ -40,6 +40,17 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
   const handleFileUpload = async (file, endpoint, type) => {
     if (!file) return;
     
+    // Check file size before upload
+    const maxSize = type === 'video' ? 300 * 1024 * 1024 : // 300MB for videos
+                   type === 'cv' ? 10 * 1024 * 1024 : // 10MB for documents
+                   type === 'photo' ? 10 * 1024 * 1024 : // 10MB for photos
+                   5 * 1024 * 1024; // 5MB for avatars
+    
+    if (file.size > maxSize) {
+      alert(`Archivo demasiado grande. Tamaño máximo: ${Math.round(maxSize / (1024 * 1024))}MB`);
+      return;
+    }
+    
     setUploading(true);
     setUploadProgress(prev => ({ ...prev, [type]: 0 }));
     
@@ -54,7 +65,9 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(prev => ({ ...prev, [type]: percentCompleted }));
-        }
+        },
+        // Increase timeout for large files
+        timeout: type === 'video' ? 300000 : 60000 // 5 minutes for videos, 1 minute for others
       });
       
       // Refresh player data
@@ -67,7 +80,11 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
       }, 2000);
       
     } catch (error) {
-      alert(error.response?.data?.detail || `Error uploading ${type}`);
+      if (error.code === 'ECONNABORTED') {
+        alert(`Tiempo de subida agotado. Intenta con un archivo más pequeño o verifica tu conexión.`);
+      } else {
+        alert(error.response?.data?.detail || `Error subiendo ${type}`);
+      }
     } finally {
       setUploading(false);
     }
