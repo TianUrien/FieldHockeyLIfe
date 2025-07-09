@@ -667,7 +667,7 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         vacancy_data = {
             "club_id": cls.club_id,
             "position": "Forward",
-            "title": "Senior Forward Coach",
+            "title": "Senior Forward Position",
             "description": "We're looking for an experienced forward to join our coaching team.",
             "requirements": "Minimum 5 years playing experience at national level",
             "experience_level": "Professional",
