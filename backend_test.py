@@ -542,6 +542,30 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
     def test_enhanced_club_features(cls):
         """Test the enhanced club features"""
         
+        # Test Application model with optional fields
+        print("\n🔍 Testing Application model with optional fields...")
+        # Create a new application with optional fields
+        application_data = {
+            "player_id": cls.player_id,
+            "vacancy_id": cls.vacancy_id,
+            "cover_letter": "I am very interested in this position and believe my skills would be a great fit."
+        }
+        
+        response = requests.post(f"{BASE_URL}/applications", json=application_data)
+        if response.status_code == 400:
+            print("✅ Application with same player and vacancy rejected (already applied)")
+        elif response.status_code == 200:
+            application = response.json()
+            # Check that optional fields are present in the response
+            if "player_position" in application and "player_location" in application and "player_experience" in application and "vacancy_title" in application:
+                print("✅ Application model with optional fields test passed")
+            else:
+                print("❌ Application model with optional fields test failed: Optional fields not present in response")
+                return
+        else:
+            print(f"❌ Application model with optional fields test failed: {response.status_code} - {response.text}")
+            return
+            
         # Test updating club profile with enhanced fields
         print("\n🔍 Testing updating club profile with enhanced fields...")
         update_data = {
