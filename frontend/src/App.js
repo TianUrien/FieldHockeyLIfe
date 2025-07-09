@@ -281,6 +281,13 @@ const PlayerRegister = ({ onRegister }) => {
           onChange={(e) => setFormData({...formData, email: e.target.value})}
           required
         />
+        <input
+          type="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={(e) => setFormData({...formData, password: e.target.value})}
+          required
+        />
         <select
           value={formData.position}
           onChange={(e) => setFormData({...formData, position: e.target.value})}
