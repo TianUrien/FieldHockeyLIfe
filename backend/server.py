@@ -111,13 +111,13 @@ def save_uploaded_file(file: UploadFile, directory: str, max_size: int, allowed_
     file_extension = Path(file.filename).suffix.lower()
     
     # Check file extension instead of magic for more reliable validation
-    if directory == "avatars":
+    if directory == "avatars" or directory == "logos":
         allowed_extensions = {'.jpg', '.jpeg', '.png', '.gif'}
     elif directory == "documents":
         allowed_extensions = {'.pdf', '.doc', '.docx'}
-    elif directory == "photos":
+    elif directory == "photos" or directory == "club_gallery":
         allowed_extensions = {'.jpg', '.jpeg', '.png', '.gif'}
-    elif directory == "videos":
+    elif directory == "videos" or directory == "club_videos":
         allowed_extensions = {'.mp4', '.mov', '.avi'}
     else:
         allowed_extensions = set()
