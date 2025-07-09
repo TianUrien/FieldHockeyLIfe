@@ -715,6 +715,41 @@ const PlayerLogin = ({ onLogin }) => {
   );
 };
 
+const ClubLogin = ({ onLogin }) => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onLogin(formData);
+  };
+
+  return (
+    <div className="form-container">
+      <h2>Club Login</h2>
+      <form onSubmit={handleSubmit} className="registration-form">
+        <input
+          type="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={(e) => setFormData({...formData, email: e.target.value})}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={(e) => setFormData({...formData, password: e.target.value})}
+          required
+        />
+        <button type="submit" className="submit-btn">Login</button>
+      </form>
+    </div>
+  );
+};
+
 const EditVacancy = ({ vacancy, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     position: vacancy.position || "",
