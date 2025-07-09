@@ -532,6 +532,179 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
                 return
         
         print("\n🎉 All API tests completed successfully!")
+        
+        # Test enhanced club features
+        print("\n===== Testing Enhanced Club Features =====")
+        cls.test_enhanced_club_features()
+    
+    @classmethod
+    def test_enhanced_club_features(cls):
+        """Test the enhanced club features"""
+        
+        # Test updating club profile with enhanced fields
+        print("\n🔍 Testing updating club profile with enhanced fields...")
+        update_data = {
+            "achievements": "3x National Champions, 2x European Cup Finalists",
+            "club_story": "Founded in 2010, our club has grown from a small local team to one of the premier hockey clubs in the country.",
+            "facilities": "2 artificial turf pitches, modern gym, video analysis room, physiotherapy suite",
+            "social_media": {
+                "instagram": "testhockeyclub",
+                "facebook": "TestHockeyClub",
+                "twitter": "TestHockeyClub"
+            }
+        }
+        
+        response = requests.put(f"{BASE_URL}/clubs/{cls.club_id}", json=update_data)
+        if response.status_code == 200:
+            club = response.json()
+            if (club["achievements"] == update_data["achievements"] and 
+                club["club_story"] == update_data["club_story"] and
+                club["facilities"] == update_data["facilities"]):
+                print("✅ Club profile update with enhanced fields test passed")
+            else:
+                print("❌ Club profile update with enhanced fields test failed: Profile not updated correctly")
+                return
+        else:
+            print(f"❌ Club profile update with enhanced fields test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test club logo upload
+        print("\n🔍 Testing club logo upload...")
+        # Create a simple test image if it doesn't exist
+        if not os.path.exists("/app/tests/test_logo.jpg"):
+            os.makedirs("/app/tests", exist_ok=True)
+            with open("/app/tests/test_logo.jpg", "wb") as f:
+                f.write(b"\x89PNG\r\n\x1a\n" + b"" * 100)  # Simple PNG header
+                
+        with open("/app/tests/test_logo.jpg", 'rb') as logo_file:
+            files = {'file': ('test_logo.jpg', logo_file, 'image/jpeg')}
+            response = requests.post(f"{BASE_URL}/clubs/{cls.club_id}/logo", files=files)
+            
+            if response.status_code == 200:
+                logo_data = response.json()
+                if 'filename' in logo_data:
+                    print(f"✅ Club logo upload test passed. Filename: {logo_data['filename']}")
+                    
+                    # Test logo access
+                    logo_url = f"{BASE_URL}/uploads/logos/{logo_data['filename']}"
+                    logo_response = requests.get(logo_url)
+                    if logo_response.status_code == 200:
+                        print(f"✅ Club logo access test passed. URL: {logo_url}")
+                    else:
+                        print(f"❌ Club logo access test failed: {logo_response.status_code}")
+                        return
+                else:
+                    print("❌ Club logo upload test failed: No filename in response")
+                    return
+            else:
+                print(f"❌ Club logo upload test failed: {response.status_code} - {response.text}")
+                return
+        
+        # Test club gallery image upload
+        print("\n🔍 Testing club gallery image upload...")
+        # Create a simple test image if it doesn't exist
+        if not os.path.exists("/app/tests/test_gallery.jpg"):
+            os.makedirs("/app/tests", exist_ok=True)
+            with open("/app/tests/test_gallery.jpg", "wb") as f:
+                f.write(b"\x89PNG\r\n\x1a\n" + b"" * 100)  # Simple PNG header
+                
+        with open("/app/tests/test_gallery.jpg", 'rb') as gallery_file:
+            files = {'file': ('test_gallery.jpg', gallery_file, 'image/jpeg')}
+            response = requests.post(f"{BASE_URL}/clubs/{cls.club_id}/gallery", files=files)
+            
+            if response.status_code == 200:
+                gallery_data = response.json()
+                if 'filename' in gallery_data:
+                    print(f"✅ Club gallery image upload test passed. Filename: {gallery_data['filename']}")
+                    
+                    # Test gallery image access
+                    gallery_url = f"{BASE_URL}/uploads/club_gallery/{gallery_data['filename']}"
+                    gallery_response = requests.get(gallery_url)
+                    if gallery_response.status_code == 200:
+                        print(f"✅ Club gallery image access test passed. URL: {gallery_url}")
+                    else:
+                        print(f"❌ Club gallery image access test failed: {gallery_response.status_code}")
+                        return
+                        
+                    # Get updated club to get the gallery image ID
+                    club_response = requests.get(f"{BASE_URL}/clubs/{cls.club_id}")
+                    if club_response.status_code == 200:
+                        club_data = club_response.json()
+                        if club_data['gallery_images'] and len(club_data['gallery_images']) > 0:
+                            gallery_id = club_data['gallery_images'][0]['id']
+                            print(f"✅ Gallery image ID retrieved: {gallery_id}")
+                            
+                            # Test gallery image deletion
+                            print("\n🔍 Testing gallery image deletion...")
+                            delete_response = requests.delete(f"{BASE_URL}/clubs/{cls.club_id}/gallery/{gallery_id}")
+                            if delete_response.status_code == 200:
+                                print("✅ Gallery image deletion test passed")
+                            else:
+                                print(f"❌ Gallery image deletion test failed: {delete_response.status_code} - {delete_response.text}")
+                                return
+                        else:
+                            print("❌ Gallery image not found in club data")
+                            return
+                    else:
+                        print(f"❌ Failed to get club data: {club_response.status_code}")
+                        return
+                else:
+                    print("❌ Club gallery image upload test failed: No filename in response")
+                    return
+            else:
+                print(f"❌ Club gallery image upload test failed: {response.status_code} - {response.text}")
+                return
+        
+        # Test creating a vacancy with enhanced fields
+        print("\n🔍 Testing creating a vacancy with enhanced fields...")
+        vacancy_data = {
+            "club_id": cls.club_id,
+            "position": "Forward",
+            "title": "Senior Forward Coach",
+            "description": "We're looking for an experienced forward to join our coaching team.",
+            "requirements": "Minimum 5 years playing experience at national level",
+            "experience_level": "Professional",
+            "location": "London, UK",
+            "salary_range": "£30,000-£40,000",
+            "contract_type": "Full-time",
+            "start_date": "2025-03-01",
+            "application_deadline": (datetime.now() + timedelta(days=30)).isoformat(),
+            "benefits": ["Visa sponsorship", "Accommodation", "Health insurance"],
+            "status": "active",
+            "priority": "high"
+        }
+        
+        response = requests.post(f"{BASE_URL}/vacancies", json=vacancy_data)
+        if response.status_code == 200:
+            vacancy = response.json()
+            enhanced_vacancy_id = vacancy["id"]
+            if (vacancy["title"] == vacancy_data["title"] and 
+                vacancy["salary_range"] == vacancy_data["salary_range"] and
+                vacancy["contract_type"] == vacancy_data["contract_type"] and
+                vacancy["priority"] == vacancy_data["priority"]):
+                print(f"✅ Vacancy creation with enhanced fields test passed. Vacancy ID: {enhanced_vacancy_id}")
+            else:
+                print("❌ Vacancy creation with enhanced fields test failed: Vacancy not created correctly")
+                return
+        else:
+            print(f"❌ Vacancy creation with enhanced fields test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test club analytics
+        print("\n🔍 Testing club analytics...")
+        response = requests.get(f"{BASE_URL}/clubs/{cls.club_id}/analytics")
+        if response.status_code == 200:
+            analytics = response.json()
+            if all(key in analytics for key in ["total_vacancies", "active_vacancies", "total_applications", "pending_applications", "total_views"]):
+                print(f"✅ Club analytics test passed. Analytics: {json.dumps(analytics, indent=2)}")
+            else:
+                print("❌ Club analytics test failed: Missing expected analytics fields")
+                return
+        else:
+            print(f"❌ Club analytics test failed: {response.status_code} - {response.text}")
+            return
+        
+        print("\n🎉 All enhanced club features tests completed successfully!")
     
     def test_dummy(self):
         """Dummy test to satisfy unittest runner"""
