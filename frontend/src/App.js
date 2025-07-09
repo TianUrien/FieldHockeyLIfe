@@ -248,6 +248,7 @@ const PlayerRegister = ({ onRegister }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
     position: "",
     experience_level: "",
     location: "",
