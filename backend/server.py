@@ -811,13 +811,48 @@ async def create_vacancy(vacancy: VacancyCreate):
     
     vacancy_dict = vacancy.dict()
     vacancy_dict["club_name"] = club["name"]
+    
+    # Set published_at if status is active
+    if vacancy_dict.get("status") == "active":
+        vacancy_dict["published_at"] = datetime.utcnow()
+    
     vacancy_obj = Vacancy(**vacancy_dict)
     await db.vacancies.insert_one(vacancy_obj.dict())
     return vacancy_obj
 
 @api_router.get("/vacancies", response_model=List[Vacancy])
-async def get_vacancies():
-    vacancies = await db.vacancies.find().sort("created_at", -1).to_list(1000)
+async def get_vacancies(
+    status: Optional[str] = None,
+    position: Optional[str] = None,
+    experience_level: Optional[str] = None,
+    location: Optional[str] = None,
+    limit: int = 100
+):
+    # Build filter query
+    filter_query = {}
+    if status:
+        filter_query["status"] = status
+    if position:
+        filter_query["position"] = position
+    if experience_level:
+        filter_query["experience_level"] = experience_level
+    if location:
+        filter_query["location"] = {"$regex": location, "$options": "i"}
+    
+    # Only show active vacancies for public listing (unless status is specifically requested)
+    if not status:
+        filter_query["status"] = "active"
+    
+    vacancies = await db.vacancies.find(filter_query).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Increment view count for active vacancies
+    for vacancy in vacancies:
+        if vacancy.get("status") == "active":
+            await db.vacancies.update_one(
+                {"id": vacancy["id"]}, 
+                {"$inc": {"views_count": 1}}
+            )
+    
     return [Vacancy(**vacancy) for vacancy in vacancies]
 
 @api_router.get("/vacancies/{vacancy_id}", response_model=Vacancy)
@@ -825,12 +860,89 @@ async def get_vacancy(vacancy_id: str):
     vacancy = await db.vacancies.find_one({"id": vacancy_id})
     if not vacancy:
         raise HTTPException(status_code=404, detail="Vacancy not found")
+    
+    # Increment view count
+    await db.vacancies.update_one(
+        {"id": vacancy_id}, 
+        {"$inc": {"views_count": 1}}
+    )
+    
     return Vacancy(**vacancy)
 
+@api_router.put("/vacancies/{vacancy_id}", response_model=Vacancy)
+async def update_vacancy(vacancy_id: str, vacancy_update: VacancyUpdate):
+    vacancy = await db.vacancies.find_one({"id": vacancy_id})
+    if not vacancy:
+        raise HTTPException(status_code=404, detail="Vacancy not found")
+    
+    # Update only provided fields
+    update_data = {k: v for k, v in vacancy_update.dict().items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow()
+    
+    # Set published_at if status changes to active
+    if update_data.get("status") == "active" and vacancy.get("status") != "active":
+        update_data["published_at"] = datetime.utcnow()
+    
+    await db.vacancies.update_one({"id": vacancy_id}, {"$set": update_data})
+    
+    # Return updated vacancy
+    updated_vacancy = await db.vacancies.find_one({"id": vacancy_id})
+    return Vacancy(**updated_vacancy)
+
+@api_router.delete("/vacancies/{vacancy_id}")
+async def delete_vacancy(vacancy_id: str):
+    vacancy = await db.vacancies.find_one({"id": vacancy_id})
+    if not vacancy:
+        raise HTTPException(status_code=404, detail="Vacancy not found")
+    
+    # Delete all applications for this vacancy
+    await db.applications.delete_many({"vacancy_id": vacancy_id})
+    
+    # Delete the vacancy
+    await db.vacancies.delete_one({"id": vacancy_id})
+    
+    return {"message": "Vacancy deleted successfully"}
+
 @api_router.get("/clubs/{club_id}/vacancies", response_model=List[Vacancy])
-async def get_club_vacancies(club_id: str):
-    vacancies = await db.vacancies.find({"club_id": club_id}).sort("created_at", -1).to_list(1000)
+async def get_club_vacancies(
+    club_id: str,
+    status: Optional[str] = None,
+    limit: int = 100
+):
+    filter_query = {"club_id": club_id}
+    if status:
+        filter_query["status"] = status
+    
+    vacancies = await db.vacancies.find(filter_query).sort("created_at", -1).limit(limit).to_list(limit)
     return [Vacancy(**vacancy) for vacancy in vacancies]
+
+@api_router.get("/clubs/{club_id}/analytics")
+async def get_club_analytics(club_id: str):
+    # Get club vacancies stats
+    total_vacancies = await db.vacancies.count_documents({"club_id": club_id})
+    active_vacancies = await db.vacancies.count_documents({"club_id": club_id, "status": "active"})
+    
+    # Get application stats
+    club_vacancies = await db.vacancies.find({"club_id": club_id}).to_list(1000)
+    vacancy_ids = [v["id"] for v in club_vacancies]
+    
+    total_applications = await db.applications.count_documents({"vacancy_id": {"$in": vacancy_ids}})
+    pending_applications = await db.applications.count_documents({
+        "vacancy_id": {"$in": vacancy_ids},
+        "status": "pending"
+    })
+    
+    # Calculate total views
+    total_views = sum(vacancy.get("views_count", 0) for vacancy in club_vacancies)
+    
+    return {
+        "total_vacancies": total_vacancies,
+        "active_vacancies": active_vacancies,
+        "total_applications": total_applications,
+        "pending_applications": pending_applications,
+        "total_views": total_views,
+        "avg_applications_per_vacancy": round(total_applications / max(total_vacancies, 1), 2)
+    }
 
 # Application routes
 @api_router.post("/applications", response_model=Application)
