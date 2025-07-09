@@ -249,20 +249,59 @@ class Vacancy(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     club_id: str
     club_name: str
+    # Basic info
     position: str
+    title: str  # Job title (can be different from position)
     description: str
     requirements: Optional[str] = None
     experience_level: str  # "Beginner", "Intermediate", "Advanced", "Professional"
     location: str
+    # Enhanced fields
+    salary_range: Optional[str] = None  # "25000-35000", "Negotiable", etc.
+    contract_type: Optional[str] = None  # "Full-time", "Part-time", "Seasonal", "Contract"
+    start_date: Optional[str] = None
+    application_deadline: Optional[datetime] = None
+    benefits: List[str] = []  # ["Visa", "Accommodation", "Transport", "Insurance", etc.]
+    status: str = "active"  # "draft", "active", "paused", "closed"
+    priority: str = "normal"  # "low", "normal", "high", "urgent"
+    # Analytics
+    views_count: int = 0
+    applications_count: int = 0
+    # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    published_at: Optional[datetime] = None
 
 class VacancyCreate(BaseModel):
     club_id: str
     position: str
+    title: str
     description: str
     requirements: Optional[str] = None
     experience_level: str
     location: str
+    salary_range: Optional[str] = None
+    contract_type: Optional[str] = None
+    start_date: Optional[str] = None
+    application_deadline: Optional[datetime] = None
+    benefits: List[str] = []
+    status: str = "active"
+    priority: str = "normal"
+
+class VacancyUpdate(BaseModel):
+    position: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    requirements: Optional[str] = None
+    experience_level: Optional[str] = None
+    location: Optional[str] = None
+    salary_range: Optional[str] = None
+    contract_type: Optional[str] = None
+    start_date: Optional[str] = None
+    application_deadline: Optional[datetime] = None
+    benefits: Optional[List[str]] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
 
 class Application(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
