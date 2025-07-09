@@ -384,6 +384,17 @@ async def upload_video(player_id: str, file: UploadFile = File(...)):
     # Save file
     filename = save_uploaded_file(file, "videos", MAX_VIDEO_SIZE, ALLOWED_VIDEO_TYPES)
     
+    # Determine file type based on extension
+    file_extension = Path(file.filename).suffix.lower()
+    if file_extension == '.mp4':
+        file_type = 'video/mp4'
+    elif file_extension == '.mov':
+        file_type = 'video/quicktime'
+    elif file_extension == '.avi':
+        file_type = 'video/x-msvideo'
+    else:
+        file_type = file.content_type or "video/mp4"
+    
     # Get file size
     file.file.seek(0)
     file_content = file.file.read()
@@ -393,7 +404,7 @@ async def upload_video(player_id: str, file: UploadFile = File(...)):
     media_file = MediaFile(
         filename=filename,
         original_name=file.filename,
-        file_type=file.content_type or "video/mp4",
+        file_type=file_type,
         file_size=file_size
     )
     
