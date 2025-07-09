@@ -390,7 +390,7 @@ const PlayerProfile = ({ player, onPlayerUpdate }) => {
               player.videos.map((video) => (
                 <div key={video.id} className="media-item">
                   <video 
-                    src={`${BACKEND_URL}/uploads/videos/${video.filename}`} 
+                    src={`${BACKEND_URL}/api/uploads/videos/${video.filename}`} 
                     className="media-thumbnail"
                     controls
                   />
