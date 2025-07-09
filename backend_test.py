@@ -661,6 +661,23 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
             else:
                 print(f"❌ Club gallery image upload test failed: {response.status_code} - {response.text}")
                 return
+                
+        # Test file type validation
+        print("\n🔍 Testing file type validation...")
+        # Create a simple text file
+        test_invalid_file = "/app/tests/test_invalid.txt"
+        with open(test_invalid_file, "w") as f:
+            f.write("This is not an image file")
+                
+        with open(test_invalid_file, 'rb') as invalid_file:
+            files = {'file': ('test_invalid.txt', invalid_file, 'text/plain')}
+            response = requests.post(f"{BASE_URL}/clubs/{cls.club_id}/gallery", files=files)
+            
+            if response.status_code == 400:
+                print("✅ File type validation test passed - rejected invalid file type")
+            else:
+                print(f"❌ File type validation test failed: {response.status_code} - {response.text}")
+                return
         
         # Test creating a vacancy with enhanced fields
         print("\n🔍 Testing creating a vacancy with enhanced fields...")
