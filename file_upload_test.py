@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 
 # Use the public endpoint from the frontend .env file
-BASE_URL = "https://ea34da36-c9b5-4114-83d2-e361afa39702.preview.emergentagent.com/api"
+BASE_URL = "https://bdd291c1-244a-4f95-a238-200c9e7be078.preview.emergentagent.com/api"
 
 class FileUploadTest:
     def __init__(self):
