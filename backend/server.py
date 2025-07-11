@@ -1214,6 +1214,153 @@ async def bulk_update_applications(
     
     return {"message": f"Updated {result.modified_count} applications successfully"}
 
+# Public Profile endpoints
+@api_router.get("/public/players/{player_id}", response_model=PlayerProfile)
+async def get_public_player_profile(player_id: str):
+    """Get public player profile - accessible to everyone"""
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    # Check if player profile is verified (only show verified public profiles)
+    if not player.get("is_verified", False):
+        raise HTTPException(status_code=404, detail="Player profile not available")
+    
+    # Remove MongoDB _id field and sensitive information completely
+    player.pop("_id", None)
+    sensitive_fields = ["password_hash", "verification_token", "verification_token_expires", "password_reset_token", "password_reset_expires"]
+    for field in sensitive_fields:
+        player.pop(field, None)
+    
+    return PlayerProfile(**player)
+
+@api_router.get("/public/clubs/{club_id}", response_model=ClubProfile)
+async def get_public_club_profile(club_id: str):
+    """Get public club profile - accessible to everyone"""
+    club = await db.clubs.find_one({"id": club_id})
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Check if club profile is verified (only show verified public profiles)
+    if not club.get("is_verified", False):
+        raise HTTPException(status_code=404, detail="Club profile not available")
+    
+    # Remove MongoDB _id field and sensitive information completely
+    club.pop("_id", None)
+    sensitive_fields = ["password_hash", "verification_token", "verification_token_expires", "password_reset_token", "password_reset_expires"]
+    for field in sensitive_fields:
+        club.pop(field, None)
+    
+    return ClubProfile(**club)
+
+@api_router.get("/public/clubs/{club_id}/vacancies")
+async def get_public_club_vacancies(club_id: str):
+    """Get public vacancies for a club - accessible to everyone"""
+    # Verify club exists and is verified
+    club = await db.clubs.find_one({"id": club_id})
+    if not club or not club.get("is_verified", False):
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Get active vacancies for this club
+    vacancies = await db.vacancies.find({
+        "club_id": club_id,
+        "status": "active"
+    }).sort("created_at", -1).to_list(100)
+    
+    # Remove MongoDB _id field from each vacancy
+    for vacancy in vacancies:
+        vacancy.pop("_id", None)
+    
+    return vacancies
+
+@api_router.get("/public/players/browse")
+async def browse_public_players(
+    position: Optional[str] = None,
+    experience_level: Optional[str] = None,
+    location: Optional[str] = None,
+    country: Optional[str] = None,
+    limit: int = 20,
+    offset: int = 0
+):
+    """Browse public player profiles with filters"""
+    filter_query = {"is_verified": True}
+    
+    if position:
+        filter_query["position"] = position
+    if experience_level:
+        filter_query["experience_level"] = experience_level
+    if location:
+        filter_query["location"] = {"$regex": location, "$options": "i"}
+    if country:
+        filter_query["country"] = {"$regex": country, "$options": "i"}
+    
+    players = await db.players.find(filter_query).sort("created_at", -1).skip(offset).limit(limit).to_list(limit)
+    
+    # Remove sensitive information from each player
+    public_players = []
+    for player in players:
+        player.pop("_id", None)
+        sensitive_fields = ["password_hash", "verification_token", "verification_token_expires", "password_reset_token", "password_reset_expires"]
+        for field in sensitive_fields:
+            player.pop(field, None)
+        public_players.append(PlayerProfile(**player))
+    
+    return public_players
+
+@api_router.get("/public/clubs/browse")
+async def browse_public_clubs(
+    location: Optional[str] = None,
+    club_type: Optional[str] = None,
+    league: Optional[str] = None,
+    limit: int = 20,
+    offset: int = 0
+):
+    """Browse public club profiles with filters"""
+    filter_query = {"is_verified": True}
+    
+    if location:
+        filter_query["location"] = {"$regex": location, "$options": "i"}
+    if club_type:
+        filter_query["club_type"] = club_type
+    if league:
+        filter_query["league"] = {"$regex": league, "$options": "i"}
+    
+    clubs = await db.clubs.find(filter_query).sort("created_at", -1).skip(offset).limit(limit).to_list(limit)
+    
+    # Remove sensitive information from each club
+    public_clubs = []
+    for club in clubs:
+        club.pop("_id", None)
+        sensitive_fields = ["password_hash", "verification_token", "verification_token_expires", "password_reset_token", "password_reset_expires"]
+        for field in sensitive_fields:
+            club.pop(field, None)
+        public_clubs.append(ClubProfile(**club))
+    
+    return public_clubs
+
+@api_router.get("/public/stats")
+async def get_public_stats():
+    """Get public platform statistics"""
+    try:
+        total_players = await db.players.count_documents({"is_verified": True})
+        total_clubs = await db.clubs.count_documents({"is_verified": True})
+        total_vacancies = await db.vacancies.count_documents({"status": "active"})
+        total_applications = await db.applications.count_documents({})
+        
+        return {
+            "total_players": total_players,
+            "total_clubs": total_clubs,
+            "active_vacancies": total_vacancies,
+            "total_applications": total_applications
+        }
+    except Exception as e:
+        return {
+            "total_players": 0,
+            "total_clubs": 0,
+            "active_vacancies": 0,
+            "total_applications": 0
+        }
+
 # Profile viewing endpoints
 @api_router.get("/players/{player_id}/profile", response_model=PlayerProfile)
 async def get_player_profile(player_id: str):
