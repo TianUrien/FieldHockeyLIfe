@@ -210,6 +210,10 @@ agent_communication:
     message: "Implemented complete email verification system with Resend API. Backend fully tested and working. Frontend components created but need testing."
   - agent: "testing"
     message: "Backend email verification system is fully functional. All API endpoints working correctly with proper security measures. Ready for frontend testing."
+  - agent: "main"
+    message: "Implemented comprehensive profile viewing functionality. Added new API endpoints for player/club profile viewing and enriched applications with profile data."
+  - agent: "testing"
+    message: "All profile viewing functionality tested and working perfectly. Player and club profile APIs working correctly with proper data sanitization. Enriched applications providing detailed profile information for both clubs and players."
 
 user_problem_statement: "Test the Field Hockey Connect backend API, specifically the player registration endpoint with email verification. The backend should be running on the internal port 8001 but accessible via the external URL: https://bdd291c1-244a-4f95-a238-200c9e7be078.preview.emergentagent.com/api"
 
