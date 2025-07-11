@@ -169,29 +169,23 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
             print(f"❌ Club registration test failed: {response.status_code} - {response.text}")
             return
         
-        # Test club login with correct credentials
-        print("\n🔍 Testing club login with correct credentials...")
+        # Test club login before email verification
+        print("\n🔍 Testing club login before email verification...")
         login_data = {
             "email": cls.club_email,
             "password": cls.password
         }
         
         response = requests.post(f"{BASE_URL}/clubs/login", json=login_data)
-        if response.status_code == 200:
-            club = response.json()
-            if club["id"] == cls.club_id:
-                print("✅ Club login test passed")
-                # Check that password is not in the response
-                if "password" not in club and "password_hash" not in club:
-                    print("✅ Password security check passed - password not visible in response")
-                else:
-                    print("❌ Password security check failed - password visible in response")
-                    return
+        if response.status_code == 403:
+            result = response.json()
+            if "verify your email" in result.get("detail", "").lower():
+                print("✅ Club login before verification test passed - login blocked until verified")
             else:
-                print("❌ Club login test failed: Incorrect club data returned")
+                print(f"❌ Club login before verification test failed: Wrong error message: {result}")
                 return
         else:
-            print(f"❌ Club login test failed: {response.status_code} - {response.text}")
+            print(f"❌ Club login before verification test failed: Expected 403, got {response.status_code} - {response.text}")
             return
         
         # Test club login with incorrect credentials
