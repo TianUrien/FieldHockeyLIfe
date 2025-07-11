@@ -1229,7 +1229,7 @@ async def get_player_profile(player_id: str):
     
     return PlayerProfile(**player)
 
-@api_router.get("/clubs/{club_id}/profile", response_model=Club)
+@api_router.get("/clubs/{club_id}/profile", response_model=ClubProfile)
 async def get_club_profile(club_id: str):
     """Get detailed club profile - accessible by players for viewing club information"""
     club = await db.clubs.find_one({"id": club_id})
@@ -1241,7 +1241,7 @@ async def get_club_profile(club_id: str):
     for field in sensitive_fields:
         club.pop(field, None)
     
-    return Club(**club)
+    return ClubProfile(**club)
     
     return Club(**club)
 
