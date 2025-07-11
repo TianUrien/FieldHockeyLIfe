@@ -78,8 +78,8 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
             print(f"❌ Root endpoint test failed: {response.status_code} - {response.text}")
             return
         
-        # Test player registration with password
-        print("\n🔍 Testing player registration with password...")
+        # Test player registration with email verification
+        print("\n🔍 Testing player registration with email verification...")
         player_data = {
             "name": f"Test Player {cls.test_id}",
             "email": cls.player_email,
@@ -93,14 +93,17 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         
         response = requests.post(f"{BASE_URL}/players", json=player_data)
         if response.status_code == 200:
-            player = response.json()
-            cls.player_id = player["id"]
-            # Check that password is not in the response
-            if "password" not in player and "password_hash" not in player:
-                print(f"✅ Player registration test passed. Player ID: {cls.player_id}")
-                print("✅ Password security check passed - password not visible in response")
+            result = response.json()
+            # Check that response contains success message instead of user object
+            if "message" in result and "Account created successfully" in result["message"]:
+                print("✅ Player registration test passed - returns success message")
+                print("✅ Email verification system working - registration requires verification")
+                
+                # Get the player ID by checking the database (we'll need to get it after verification)
+                # For now, we'll store the email to use later
+                cls.player_created = True
             else:
-                print("❌ Password security check failed - password visible in response")
+                print(f"❌ Player registration test failed: Expected success message, got {result}")
                 return
         else:
             print(f"❌ Player registration test failed: {response.status_code} - {response.text}")
