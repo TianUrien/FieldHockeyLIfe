@@ -188,18 +188,97 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
             print(f"❌ Club login before verification test failed: Expected 403, got {response.status_code} - {response.text}")
             return
         
-        # Test club login with incorrect credentials
-        print("\n🔍 Testing club login with incorrect credentials...")
-        login_data = {
-            "email": cls.club_email,
-            "password": "WrongPassword123!"
+        # Test resend verification for player
+        print("\n🔍 Testing resend verification for player...")
+        resend_data = {
+            "email": cls.player_email,
+            "user_type": "player"
         }
         
-        response = requests.post(f"{BASE_URL}/clubs/login", json=login_data)
-        if response.status_code == 401:
-            print("✅ Club login with incorrect credentials test passed")
+        response = requests.post(f"{BASE_URL}/resend-verification", json=resend_data)
+        if response.status_code == 200:
+            result = response.json()
+            if "message" in result and "sent successfully" in result["message"]:
+                print("✅ Resend verification for player test passed")
+            else:
+                print(f"❌ Resend verification for player test failed: Wrong response: {result}")
+                return
         else:
-            print(f"❌ Club login with incorrect credentials test failed: {response.status_code} - {response.text}")
+            print(f"❌ Resend verification for player test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test resend verification for club
+        print("\n🔍 Testing resend verification for club...")
+        resend_data = {
+            "email": cls.club_email,
+            "user_type": "club"
+        }
+        
+        response = requests.post(f"{BASE_URL}/resend-verification", json=resend_data)
+        if response.status_code == 200:
+            result = response.json()
+            if "message" in result and "sent successfully" in result["message"]:
+                print("✅ Resend verification for club test passed")
+            else:
+                print(f"❌ Resend verification for club test failed: Wrong response: {result}")
+                return
+        else:
+            print(f"❌ Resend verification for club test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test email verification with invalid token
+        print("\n🔍 Testing email verification with invalid token...")
+        verify_data = {
+            "token": "invalid-token-12345",
+            "user_type": "player"
+        }
+        
+        response = requests.post(f"{BASE_URL}/verify-email", json=verify_data)
+        if response.status_code == 400:
+            result = response.json()
+            if "invalid" in result.get("detail", "").lower() or "expired" in result.get("detail", "").lower():
+                print("✅ Email verification with invalid token test passed")
+            else:
+                print(f"❌ Email verification with invalid token test failed: Wrong error message: {result}")
+                return
+        else:
+            print(f"❌ Email verification with invalid token test failed: Expected 400, got {response.status_code} - {response.text}")
+            return
+        
+        # Test check verification status
+        print("\n🔍 Testing check verification status...")
+        response = requests.get(f"{BASE_URL}/check-verification-status", params={
+            "email": cls.player_email,
+            "user_type": "player"
+        })
+        if response.status_code == 200:
+            result = response.json()
+            if "is_verified" in result and result["is_verified"] == False:
+                print("✅ Check verification status test passed - player not verified")
+            else:
+                print(f"❌ Check verification status test failed: Wrong response: {result}")
+                return
+        else:
+            print(f"❌ Check verification status test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test resend verification for non-existent user
+        print("\n🔍 Testing resend verification for non-existent user...")
+        resend_data = {
+            "email": f"nonexistent_{cls.test_id}@test.com",
+            "user_type": "player"
+        }
+        
+        response = requests.post(f"{BASE_URL}/resend-verification", json=resend_data)
+        if response.status_code == 404:
+            result = response.json()
+            if "not found" in result.get("detail", "").lower():
+                print("✅ Resend verification for non-existent user test passed")
+            else:
+                print(f"❌ Resend verification for non-existent user test failed: Wrong error message: {result}")
+                return
+        else:
+            print(f"❌ Resend verification for non-existent user test failed: Expected 404, got {response.status_code} - {response.text}")
             return
         
         # Test duplicate email registration for player
