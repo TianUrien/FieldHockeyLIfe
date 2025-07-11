@@ -646,7 +646,7 @@ async def delete_video(player_id: str, video_id: str):
     
     return {"message": "Video deleted successfully"}
 
-@api_router.post("/clubs", response_model=Club)
+@api_router.post("/clubs")
 async def create_club(club: ClubCreate):
     # Check if email already exists
     existing_club = await db.clubs.find_one({"email": club.email})
@@ -656,6 +656,10 @@ async def create_club(club: ClubCreate):
     # Hash password
     password_hash = get_password_hash(club.password)
     
+    # Generate verification token
+    verification_token = str(uuid.uuid4())
+    verification_expires = datetime.utcnow() + timedelta(hours=24)
+    
     # Create club data
     club_dict = club.dict()
     club_dict.pop("password")  # Remove plain password
@@ -663,13 +667,24 @@ async def create_club(club: ClubCreate):
     club_dict["gallery_images"] = []
     club_dict["videos"] = []
     club_dict["social_media"] = {}
+    club_dict["is_verified"] = False
+    club_dict["verification_token"] = verification_token
+    club_dict["verification_token_expires"] = verification_expires
     
     club_obj = Club(**{k: v for k, v in club_dict.items() if k != "password_hash"})
     
     # Save to database with password hash
     await db.clubs.insert_one({**club_obj.dict(), "password_hash": password_hash})
     
-    return club_obj
+    # Send verification email
+    email_sent = send_verification_email(club.email, verification_token, "club", club.name)
+    
+    if not email_sent:
+        # If email sending fails, still allow registration but warn user
+        logging.warning(f"Failed to send verification email to {club.email}")
+        return {"message": "Account created successfully, but verification email could not be sent. Please contact support."}
+    
+    return {"message": "Account created successfully! Please check your email to verify your account."}
 
 @api_router.get("/clubs", response_model=List[Club])
 async def get_clubs():
