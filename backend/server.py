@@ -382,6 +382,10 @@ async def login_player(credentials: PlayerLogin):
     if not verify_password(credentials.password, player_data.get("password_hash")):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
+    # Check if email is verified
+    if not player_data.get("is_verified", False):
+        raise HTTPException(status_code=403, detail="Please verify your email address before logging in")
+    
     # Remove password_hash from response
     player_data.pop("password_hash", None)
     return Player(**player_data)
@@ -396,6 +400,10 @@ async def login_club(credentials: ClubLogin):
     # Verify password
     if not verify_password(credentials.password, club_data.get("password_hash")):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Check if email is verified
+    if not club_data.get("is_verified", False):
+        raise HTTPException(status_code=403, detail="Please verify your email address before logging in")
     
     # Remove password_hash from response
     club_data.pop("password_hash", None)
