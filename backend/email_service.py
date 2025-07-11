@@ -1,0 +1,373 @@
+import resend
+import os
+from typing import Optional
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize Resend with API key
+resend.api_key = os.getenv("RESEND_API_KEY")
+
+def send_verification_email(email: str, token: str, user_type: str, name: str) -> bool:
+    """
+    Send email verification email using Resend
+    
+    Args:
+        email: Recipient email address
+        token: Verification token
+        user_type: 'player' or 'club'
+        name: User's name
+    
+    Returns:
+        bool: True if email sent successfully, False otherwise
+    """
+    try:
+        frontend_url = os.getenv("FRONTEND_URL", "https://bdd291c1-244a-4f95-a238-200c9e7be078.preview.emergentagent.com")
+        verification_url = f"{frontend_url}/verify-email?token={token}&type={user_type}"
+        
+        # Create HTML email template
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Email Verification - Field Hockey Connect</title>
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }}
+                .header {{
+                    text-align: center;
+                    padding: 20px 0;
+                    border-bottom: 2px solid #e9ecef;
+                }}
+                .logo {{
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #2c5530;
+                    margin-bottom: 10px;
+                }}
+                .content {{
+                    padding: 30px 0;
+                }}
+                .btn {{
+                    display: inline-block;
+                    background-color: #2c5530;
+                    color: white;
+                    padding: 12px 30px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                }}
+                .btn:hover {{
+                    background-color: #1e3a21;
+                }}
+                .footer {{
+                    text-align: center;
+                    padding: 20px 0;
+                    border-top: 1px solid #e9ecef;
+                    color: #666;
+                    font-size: 14px;
+                }}
+                .alt-link {{
+                    color: #2c5530;
+                    word-break: break-all;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="logo">🏑 Field Hockey Connect</div>
+                <p>Welcome to the premier platform for field hockey professionals</p>
+            </div>
+            
+            <div class="content">
+                <h2>Welcome to Field Hockey Connect, {name}!</h2>
+                
+                <p>Thank you for registering as a <strong>{user_type}</strong> on Field Hockey Connect. To complete your registration and start connecting with the field hockey community, please verify your email address.</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{verification_url}" class="btn">Verify Your Email Address</a>
+                </div>
+                
+                <p>If the button above doesn't work, you can copy and paste the following link into your browser:</p>
+                <p><a href="{verification_url}" class="alt-link">{verification_url}</a></p>
+                
+                <p><strong>This verification link will expire in 24 hours.</strong></p>
+                
+                <p>If you didn't create an account with us, please ignore this email.</p>
+            </div>
+            
+            <div class="footer">
+                <p>Field Hockey Connect - Connecting Players & Clubs</p>
+                <p>This is an automated email. Please do not reply to this address.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Create text version for email clients that don't support HTML
+        text_content = f"""
+        Welcome to Field Hockey Connect, {name}!
+        
+        Thank you for registering as a {user_type} on Field Hockey Connect.
+        
+        To complete your registration, please verify your email address by clicking this link:
+        {verification_url}
+        
+        This verification link will expire in 24 hours.
+        
+        If you didn't create an account with us, please ignore this email.
+        
+        Field Hockey Connect - Connecting Players & Clubs
+        """
+        
+        # Send email using Resend
+        response = resend.Emails.send({
+            "from": "Field Hockey Connect <noreply@resend.dev>",
+            "to": [email],
+            "subject": f"Verify your email address - Field Hockey Connect",
+            "html": html_content,
+            "text": text_content
+        })
+        
+        logger.info(f"Email sent successfully to {email}. Response: {response}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to send verification email to {email}: {str(e)}")
+        return False
+
+
+def send_password_reset_email(email: str, token: str, user_type: str, name: str) -> bool:
+    """
+    Send password reset email using Resend
+    
+    Args:
+        email: Recipient email address
+        token: Password reset token
+        user_type: 'player' or 'club'
+        name: User's name
+    
+    Returns:
+        bool: True if email sent successfully, False otherwise
+    """
+    try:
+        frontend_url = os.getenv("FRONTEND_URL", "https://bdd291c1-244a-4f95-a238-200c9e7be078.preview.emergentagent.com")
+        reset_url = f"{frontend_url}/reset-password?token={token}&type={user_type}"
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Password Reset - Field Hockey Connect</title>
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }}
+                .header {{
+                    text-align: center;
+                    padding: 20px 0;
+                    border-bottom: 2px solid #e9ecef;
+                }}
+                .logo {{
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #2c5530;
+                    margin-bottom: 10px;
+                }}
+                .content {{
+                    padding: 30px 0;
+                }}
+                .btn {{
+                    display: inline-block;
+                    background-color: #dc3545;
+                    color: white;
+                    padding: 12px 30px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                }}
+                .footer {{
+                    text-align: center;
+                    padding: 20px 0;
+                    border-top: 1px solid #e9ecef;
+                    color: #666;
+                    font-size: 14px;
+                }}
+                .alt-link {{
+                    color: #dc3545;
+                    word-break: break-all;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="logo">🏑 Field Hockey Connect</div>
+                <p>Password Reset Request</p>
+            </div>
+            
+            <div class="content">
+                <h2>Password Reset Request</h2>
+                
+                <p>Hello {name},</p>
+                
+                <p>We received a request to reset the password for your Field Hockey Connect account. If you made this request, please click the button below to reset your password.</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_url}" class="btn">Reset Your Password</a>
+                </div>
+                
+                <p>If the button above doesn't work, you can copy and paste the following link into your browser:</p>
+                <p><a href="{reset_url}" class="alt-link">{reset_url}</a></p>
+                
+                <p><strong>This password reset link will expire in 2 hours.</strong></p>
+                
+                <p>If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
+            </div>
+            
+            <div class="footer">
+                <p>Field Hockey Connect - Connecting Players & Clubs</p>
+                <p>This is an automated email. Please do not reply to this address.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        response = resend.Emails.send({
+            "from": "Field Hockey Connect <noreply@resend.dev>",
+            "to": [email],
+            "subject": "Password Reset Request - Field Hockey Connect",
+            "html": html_content
+        })
+        
+        logger.info(f"Password reset email sent successfully to {email}. Response: {response}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to send password reset email to {email}: {str(e)}")
+        return False
+
+
+def send_welcome_email(email: str, user_type: str, name: str) -> bool:
+    """
+    Send welcome email after successful verification
+    
+    Args:
+        email: Recipient email address
+        user_type: 'player' or 'club'
+        name: User's name
+    
+    Returns:
+        bool: True if email sent successfully, False otherwise
+    """
+    try:
+        frontend_url = os.getenv("FRONTEND_URL", "https://bdd291c1-244a-4f95-a238-200c9e7be078.preview.emergentagent.com")
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Welcome to Field Hockey Connect</title>
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }}
+                .header {{
+                    text-align: center;
+                    padding: 20px 0;
+                    border-bottom: 2px solid #e9ecef;
+                }}
+                .logo {{
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #2c5530;
+                    margin-bottom: 10px;
+                }}
+                .content {{
+                    padding: 30px 0;
+                }}
+                .btn {{
+                    display: inline-block;
+                    background-color: #2c5530;
+                    color: white;
+                    padding: 12px 30px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                }}
+                .footer {{
+                    text-align: center;
+                    padding: 20px 0;
+                    border-top: 1px solid #e9ecef;
+                    color: #666;
+                    font-size: 14px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="logo">🏑 Field Hockey Connect</div>
+                <p>Welcome to the field hockey community!</p>
+            </div>
+            
+            <div class="content">
+                <h2>Welcome to Field Hockey Connect, {name}!</h2>
+                
+                <p>Congratulations! Your email has been successfully verified and your account is now active.</p>
+                
+                {'<p>As a player, you can now:</p><ul><li>Create and customize your player profile</li><li>Upload your CV, photos, and videos</li><li>Browse and apply for field hockey opportunities</li><li>Connect with clubs worldwide</li></ul>' if user_type == 'player' else '<p>As a club, you can now:</p><ul><li>Create and customize your club profile</li><li>Post job vacancies and opportunities</li><li>Browse and contact talented players</li><li>Manage applications and build your team</li></ul>'}
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{frontend_url}" class="btn">Get Started Now</a>
+                </div>
+                
+                <p>We're excited to have you join the Field Hockey Connect community!</p>
+            </div>
+            
+            <div class="footer">
+                <p>Field Hockey Connect - Connecting Players & Clubs</p>
+                <p>Need help? Contact our support team for assistance.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        response = resend.Emails.send({
+            "from": "Field Hockey Connect <noreply@resend.dev>",
+            "to": [email],
+            "subject": "Welcome to Field Hockey Connect!",
+            "html": html_content
+        })
+        
+        logger.info(f"Welcome email sent successfully to {email}. Response: {response}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to send welcome email to {email}: {str(e)}")
+        return False
