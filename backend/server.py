@@ -1277,10 +1277,10 @@ async def get_player_applications_with_clubs(
             # Get club profile
             club = await db.clubs.find_one({"id": vacancy["club_id"]})
             if club:
-                # Remove sensitive data
-                club.pop("password_hash", None)
-                club.pop("verification_token", None)
-                club.pop("verification_token_expires", None)
+                # Remove sensitive data completely
+                sensitive_fields = ["password_hash", "verification_token", "verification_token_expires", "password_reset_token", "password_reset_expires"]
+                for field in sensitive_fields:
+                    club.pop(field, None)
                 
                 # Add club profile to application
                 app["club_profile"] = club
