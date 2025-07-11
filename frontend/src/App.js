@@ -197,6 +197,23 @@ function MainApp() {
     return applications.some(app => app.player_id === currentUser?.id && app.vacancy_id === vacancyId);
   };
 
+  const handleResendVerification = async (email, userType) => {
+    try {
+      await axios.post(`${API}/resend-verification`, {
+        email: email,
+        user_type: userType
+      });
+      alert("Verification email sent! Please check your inbox.");
+    } catch (error) {
+      alert(error.response?.data?.detail || "Failed to resend verification email");
+    }
+  };
+
+  const dismissVerificationAlert = () => {
+    setShowVerificationAlert(false);
+    setVerificationEmail('');
+  };
+
   return (
     <div className="App">
       <nav className="navbar">
