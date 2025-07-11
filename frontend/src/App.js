@@ -689,7 +689,7 @@ const PlayerDashboard = ({ player, applications, onPlayerUpdate, onViewClubProfi
   </div>
 );
 
-const ClubDashboard = ({ club, vacancies, applications, onCreateVacancy, onClubUpdate, onEditVacancy, onDeleteVacancy }) => (
+const ClubDashboard = ({ club, vacancies, applications, onCreateVacancy, onClubUpdate, onEditVacancy, onDeleteVacancy, onViewPlayerProfile }) => (
   <div className="dashboard-container">
     <h2>Club Dashboard</h2>
     <div className="dashboard-grid">
@@ -750,9 +750,26 @@ const ClubDashboard = ({ club, vacancies, applications, onCreateVacancy, onClubU
           <div className="applications-list">
             {applications.map(app => (
               <div key={app.id} className="application-item">
-                <p><strong>{app.player_name}</strong> applied for {app.vacancy_position}</p>
-                <p className={`status ${app.status}`}>Status: {app.status}</p>
+                <div className="application-header">
+                  <p><strong>{app.player_profile?.name || app.player_name}</strong> applied for {app.vacancy_details?.position || app.vacancy_position}</p>
+                  <p className={`status ${app.status}`}>Status: {app.status}</p>
+                </div>
                 <p>Applied: {new Date(app.applied_at).toLocaleDateString()}</p>
+                {app.player_profile && (
+                  <div className="player-preview">
+                    <p><strong>Position:</strong> {app.player_profile.position}</p>
+                    <p><strong>Experience:</strong> {app.player_profile.experience_level}</p>
+                    <p><strong>Location:</strong> {app.player_profile.location}</p>
+                    {onViewPlayerProfile && (
+                      <button 
+                        className="view-profile-btn"
+                        onClick={() => onViewPlayerProfile(app.player_profile.id)}
+                      >
+                        View Full Profile
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
