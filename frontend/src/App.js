@@ -274,7 +274,7 @@ function MainApp() {
               </>
             )}
             <button 
-              className="nav-btn tertiary" 
+              className="nav-btn prominent" 
               onClick={() => setCurrentView("vacancies")}
             >
               View Opportunities
