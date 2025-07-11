@@ -283,6 +283,41 @@ function MainApp() {
         </div>
       </nav>
 
+      {/* Email Verification Alert */}
+      {showVerificationAlert && (
+        <div className="verification-alert">
+          <div className="alert-content">
+            <div className="alert-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </div>
+            <div className="alert-message">
+              <h4>Email Verification Required</h4>
+              <p>We've sent a verification email to <strong>{verificationEmail}</strong>. Please check your inbox and click the verification link to complete your registration.</p>
+            </div>
+            <div className="alert-actions">
+              <button 
+                className="resend-btn-alert"
+                onClick={() => {
+                  const userType = currentView.includes('player') ? 'player' : 'club';
+                  handleResendVerification(verificationEmail, userType);
+                }}
+              >
+                Resend Email
+              </button>
+              <button 
+                className="dismiss-btn-alert"
+                onClick={dismissVerificationAlert}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="main-content">
         {currentView === "home" && <HomeView />}
         {currentView === "player-register" && <PlayerRegister onRegister={handlePlayerRegister} />}
