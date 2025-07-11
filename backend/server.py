@@ -1215,7 +1215,7 @@ async def bulk_update_applications(
     return {"message": f"Updated {result.modified_count} applications successfully"}
 
 # Profile viewing endpoints
-@api_router.get("/players/{player_id}/profile", response_model=Player)
+@api_router.get("/players/{player_id}/profile", response_model=PlayerProfile)
 async def get_player_profile(player_id: str):
     """Get detailed player profile - accessible by clubs for reviewing applications"""
     player = await db.players.find_one({"id": player_id})
@@ -1227,7 +1227,7 @@ async def get_player_profile(player_id: str):
     for field in sensitive_fields:
         player.pop(field, None)
     
-    return Player(**player)
+    return PlayerProfile(**player)
 
 @api_router.get("/clubs/{club_id}/profile", response_model=Club)
 async def get_club_profile(club_id: str):
