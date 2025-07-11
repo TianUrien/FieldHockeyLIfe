@@ -161,6 +161,27 @@ body {
   background: var(--border-light);
 }
 
+.nav-btn.prominent {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+  color: white;
+  font-weight: 600;
+  border: 2px solid transparent;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-btn.prominent:hover {
+  background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.nav-btn.prominent:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
 .nav-divider {
   color: var(--border-medium);
   margin: 0 var(--space-2);
