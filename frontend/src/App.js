@@ -219,6 +219,28 @@ function MainApp() {
     setVerificationEmail('');
   };
 
+  const loadEnrichedApplications = async () => {
+    if (!currentUser || !userType) return;
+    
+    try {
+      if (userType === 'club') {
+        const response = await axios.get(`${API}/clubs/${currentUser.id}/applications-with-profiles`);
+        setEnrichedApplications(response.data);
+      } else if (userType === 'player') {
+        const response = await axios.get(`${API}/players/${currentUser.id}/applications-with-clubs`);
+        setEnrichedApplications(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading enriched applications:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser && userType) {
+      loadEnrichedApplications();
+    }
+  }, [currentUser, userType]);
+
   return (
     <div className="App">
       <nav className="navbar">
