@@ -1171,6 +1171,187 @@ async def bulk_update_applications(
     
     return {"message": f"Updated {result.modified_count} applications successfully"}
 
+# Email verification endpoints
+@api_router.post("/verify-email")
+async def verify_email(verification: EmailVerificationRequest):
+    """Verify email address using token"""
+    user_type = verification.user_type.lower()
+    
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
+    # Determine collection
+    collection = db.players if user_type == "player" else db.clubs
+    
+    # Find user by verification token
+    user = await collection.find_one({
+        "verification_token": verification.token,
+        "verification_token_expires": {"$gt": datetime.utcnow()}
+    })
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+    
+    # Update user as verified and remove token
+    await collection.update_one(
+        {"id": user["id"]},
+        {
+            "$set": {"is_verified": True, "updated_at": datetime.utcnow()},
+            "$unset": {"verification_token": "", "verification_token_expires": ""}
+        }
+    )
+    
+    # Send welcome email
+    send_welcome_email(user["email"], user_type, user["name"])
+    
+    return {"message": "Email verified successfully! Welcome to Field Hockey Connect."}
+
+@api_router.post("/resend-verification")
+async def resend_verification(request: ResendVerificationRequest):
+    """Resend verification email"""
+    user_type = request.user_type.lower()
+    
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
+    # Determine collection
+    collection = db.players if user_type == "player" else db.clubs
+    
+    # Find user by email
+    user = await collection.find_one({"email": request.email})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.get("is_verified", False):
+        raise HTTPException(status_code=400, detail="Email is already verified")
+    
+    # Generate new verification token
+    verification_token = str(uuid.uuid4())
+    verification_expires = datetime.utcnow() + timedelta(hours=24)
+    
+    # Update user with new token
+    await collection.update_one(
+        {"id": user["id"]},
+        {
+            "$set": {
+                "verification_token": verification_token,
+                "verification_token_expires": verification_expires,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Send verification email
+    email_sent = send_verification_email(request.email, verification_token, user_type, user["name"])
+    
+    if not email_sent:
+        raise HTTPException(status_code=500, detail="Failed to send verification email")
+    
+    return {"message": "Verification email sent successfully"}
+
+@api_router.post("/request-password-reset")
+async def request_password_reset(request: PasswordResetRequest):
+    """Request password reset email"""
+    user_type = request.user_type.lower()
+    
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
+    # Determine collection
+    collection = db.players if user_type == "player" else db.clubs
+    
+    # Find user by email
+    user = await collection.find_one({"email": request.email})
+    
+    if not user:
+        # Don't reveal if email exists or not for security
+        return {"message": "If an account with this email exists, a password reset email has been sent"}
+    
+    # Generate password reset token
+    reset_token = str(uuid.uuid4())
+    reset_expires = datetime.utcnow() + timedelta(hours=2)  # 2 hour expiry
+    
+    # Update user with reset token
+    await collection.update_one(
+        {"id": user["id"]},
+        {
+            "$set": {
+                "password_reset_token": reset_token,
+                "password_reset_expires": reset_expires,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Send password reset email
+    send_password_reset_email(request.email, reset_token, user_type, user["name"])
+    
+    return {"message": "If an account with this email exists, a password reset email has been sent"}
+
+@api_router.post("/reset-password")
+async def reset_password(request: PasswordResetConfirm):
+    """Reset password using token"""
+    user_type = request.user_type.lower()
+    
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
+    # Determine collection
+    collection = db.players if user_type == "player" else db.clubs
+    
+    # Find user by reset token
+    user = await collection.find_one({
+        "password_reset_token": request.token,
+        "password_reset_expires": {"$gt": datetime.utcnow()}
+    })
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    # Hash new password
+    new_password_hash = get_password_hash(request.new_password)
+    
+    # Update user with new password and remove reset token
+    await collection.update_one(
+        {"id": user["id"]},
+        {
+            "$set": {
+                "password_hash": new_password_hash,
+                "updated_at": datetime.utcnow()
+            },
+            "$unset": {
+                "password_reset_token": "",
+                "password_reset_expires": ""
+            }
+        }
+    )
+    
+    return {"message": "Password reset successfully"}
+
+@api_router.get("/check-verification-status")
+async def check_verification_status(email: str, user_type: str):
+    """Check if user email is verified"""
+    user_type = user_type.lower()
+    
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
+    # Determine collection
+    collection = db.players if user_type == "player" else db.clubs
+    
+    # Find user by email
+    user = await collection.find_one({"email": email})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "is_verified": user.get("is_verified", False),
+        "email": user["email"],
+        "name": user["name"]
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
