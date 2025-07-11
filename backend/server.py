@@ -410,7 +410,7 @@ async def login_club(credentials: ClubLogin):
     return Club(**club_data)
 
 # Player routes
-@api_router.post("/players", response_model=Player)
+@api_router.post("/players")
 async def create_player(player: PlayerCreate):
     # Check if email already exists
     existing_player = await db.players.find_one({"email": player.email})
@@ -420,19 +420,34 @@ async def create_player(player: PlayerCreate):
     # Hash password
     password_hash = get_password_hash(player.password)
     
+    # Generate verification token
+    verification_token = str(uuid.uuid4())
+    verification_expires = datetime.utcnow() + timedelta(hours=24)
+    
     # Create player data
     player_dict = player.dict()
     player_dict.pop("password")  # Remove plain password
     player_dict["password_hash"] = password_hash
     player_dict["photos"] = []
     player_dict["videos"] = []
+    player_dict["is_verified"] = False
+    player_dict["verification_token"] = verification_token
+    player_dict["verification_token_expires"] = verification_expires
     
     player_obj = Player(**{k: v for k, v in player_dict.items() if k != "password_hash"})
     
     # Save to database with password hash
     await db.players.insert_one({**player_obj.dict(), "password_hash": password_hash})
     
-    return player_obj
+    # Send verification email
+    email_sent = send_verification_email(player.email, verification_token, "player", player.name)
+    
+    if not email_sent:
+        # If email sending fails, still allow registration but warn user
+        logging.warning(f"Failed to send verification email to {player.email}")
+        return {"message": "Account created successfully, but verification email could not be sent. Please contact support."}
+    
+    return {"message": "Account created successfully! Please check your email to verify your account."}
 
 @api_router.get("/players", response_model=List[Player])
 async def get_players():
