@@ -14,7 +14,7 @@ from passlib.context import CryptContext
 import shutil
 import magic
 from urllib.parse import quote
-from email_service import send_verification_email, send_welcome_email, send_password_reset_email
+from backend.email_service import send_verification_email, send_welcome_email, send_password_reset_email
 
 
 ROOT_DIR = Path(__file__).parent
