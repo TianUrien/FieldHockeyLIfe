@@ -9,11 +9,12 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from passlib.context import CryptContext
 import shutil
 import magic
 from urllib.parse import quote
+from email_service import send_verification_email, send_welcome_email, send_password_reset_email
 
 
 ROOT_DIR = Path(__file__).parent
