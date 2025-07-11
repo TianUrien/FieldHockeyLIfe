@@ -339,3 +339,105 @@ test_plan:
 agent_communication:
     - agent: "testing"
       message: "Completed comprehensive testing of Field Hockey Connect backend API email verification system. All core functionality working correctly. Email verification flow properly implemented with appropriate security measures. Registration returns success messages instead of user objects, login blocked until verification, verification endpoints handle edge cases properly. Email service integration working with graceful error handling for API failures. System ready for production with valid Resend API key."
+
+user_problem_statement: "Test the new profile viewing functionality in the Field Hockey Connect backend"
+
+backend:
+  - task: "Player Profile Viewing API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/players/{player_id}/profile endpoint working correctly. Returns complete player profile data without sensitive information (password_hash, verification_token, verification_token_expires). Proper error handling for non-existent players (404). Response time: ~0.019s."
+
+  - task: "Club Profile Viewing API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/clubs/{club_id}/profile endpoint working correctly. Returns complete club profile data without sensitive information. Proper error handling for non-existent clubs (404). Response time: ~0.018s."
+
+  - task: "Enriched Applications for Clubs API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/clubs/{club_id}/applications-with-profiles endpoint working correctly. Returns applications with detailed player profile information and vacancy details. Properly removes sensitive data from embedded player profiles. Handles non-existent clubs gracefully (empty list). Response time: ~0.026s."
+
+  - task: "Enriched Applications for Players API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/players/{player_id}/applications-with-clubs endpoint working correctly. Returns applications with detailed club profile information and vacancy details. Properly removes sensitive data from embedded club profiles. Handles non-existent players gracefully (empty list). Response time: ~0.026s."
+
+  - task: "Vacancy with Club Profile API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/vacancies/{vacancy_id}/with-club-profile endpoint working correctly. Returns vacancy details with full club profile information. Properly removes sensitive data from embedded club profile. Proper error handling for non-existent vacancies (404). Response time: ~0.024s. Fixed ObjectId serialization issue by removing MongoDB _id fields."
+
+  - task: "Profile Data Security and Sanitization"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "All profile viewing endpoints properly remove sensitive information including password_hash, verification_token, verification_token_expires, password_reset_token, password_reset_expires, and MongoDB _id fields. Created separate PlayerProfile and ClubProfile models to ensure sensitive fields are never included in responses."
+
+  - task: "Profile Viewing Performance"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "All profile viewing endpoints respond within acceptable time limits (<2s). Player profile: ~0.019s, Club profile: ~0.018s, Enriched applications: ~0.026s, Vacancy with club: ~0.024s. Performance is excellent for the data complexity involved."
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.1"
+  test_sequence: 2
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Profile viewing functionality testing completed"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
