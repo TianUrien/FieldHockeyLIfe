@@ -1183,6 +1183,49 @@ body {
   transform: translateY(-1px);
 }
 
+/* Vacancy Actions */
+.vacancy-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.vacancy-actions .apply-btn {
+  flex: 1;
+  min-width: 120px;
+}
+
+.vacancy-actions .view-profile-btn {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Player Preview */
+.player-preview {
+  background: var(--background-gray);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-3);
+  border-left: 4px solid var(--primary-blue);
+}
+
+.player-preview p {
+  margin: var(--space-1) 0;
+  font-size: var(--font-size-sm);
+}
+
+.application-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-2);
+}
+
+.application-header p {
+  margin: 0;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .profile-modal {
