@@ -1317,15 +1317,20 @@ async def get_player_applications_with_clubs(
     # Enrich applications with club profile data
     enriched_applications = []
     for app in applications:
+        # Remove MongoDB _id field from application
+        app.pop("_id", None)
+        
         # Get vacancy details
         vacancy = await db.vacancies.find_one({"id": app["vacancy_id"]})
         if vacancy:
+            vacancy.pop("_id", None)
             app["vacancy_details"] = vacancy
             
             # Get club profile
             club = await db.clubs.find_one({"id": vacancy["club_id"]})
             if club:
-                # Remove sensitive data completely
+                # Remove MongoDB _id field and sensitive data completely
+                club.pop("_id", None)
                 sensitive_fields = ["password_hash", "verification_token", "verification_token_expires", "password_reset_token", "password_reset_expires"]
                 for field in sensitive_fields:
                     club.pop(field, None)
