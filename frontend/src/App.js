@@ -651,7 +651,7 @@ const VacanciesList = ({ vacancies, currentUser, userType, onApply, hasApplied, 
   </div>
 );
 
-const PlayerDashboard = ({ player, applications, onPlayerUpdate }) => (
+const PlayerDashboard = ({ player, applications, onPlayerUpdate, onViewClubProfile }) => (
   <div className="dashboard-container">
     <h2>Player Dashboard</h2>
     <div className="dashboard-grid">
@@ -667,9 +667,19 @@ const PlayerDashboard = ({ player, applications, onPlayerUpdate }) => (
           <div className="applications-list">
             {applications.map(app => (
               <div key={app.id} className="application-item">
-                <p><strong>{app.vacancy_position}</strong> at {app.club_name}</p>
-                <p className={`status ${app.status}`}>Status: {app.status}</p>
+                <div className="application-header">
+                  <p><strong>{app.vacancy_details?.position || app.vacancy_position}</strong> at {app.club_profile?.name || app.club_name}</p>
+                  <p className={`status ${app.status}`}>Status: {app.status}</p>
+                </div>
                 <p>Applied: {new Date(app.applied_at).toLocaleDateString()}</p>
+                {app.club_profile && onViewClubProfile && (
+                  <button 
+                    className="view-profile-btn"
+                    onClick={() => onViewClubProfile(app.club_profile.id)}
+                  >
+                    View Club Profile
+                  </button>
+                )}
               </div>
             ))}
           </div>
