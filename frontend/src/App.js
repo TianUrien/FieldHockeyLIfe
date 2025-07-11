@@ -33,6 +33,9 @@ function MainApp() {
   const [userType, setUserType] = useState(null); // 'player' or 'club'
   const [showVerificationAlert, setShowVerificationAlert] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [viewingPlayerProfile, setViewingPlayerProfile] = useState(null);
+  const [viewingClubProfile, setViewingClubProfile] = useState(null);
+  const [enrichedApplications, setEnrichedApplications] = useState([]);
 
   const [editingVacancy, setEditingVacancy] = useState(null);
   const navigate = useNavigate();
