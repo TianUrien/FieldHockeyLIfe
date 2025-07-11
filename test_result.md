@@ -190,6 +190,42 @@ frontend:
         agent: "main"
         comment: "Alert system for showing verification status created but needs testing"
 
+  - task: "Profile viewing system"
+    implemented: true
+    working: true
+    file: "App.js, PlayerProfileView.js, ClubProfileView.js, App.css"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Complete profile viewing system implemented with modals, buttons, and integration with dashboards"
+
+  - task: "Backend profile viewing endpoints"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "All profile viewing API endpoints working correctly with proper data sanitization and security measures"
+
+  - task: "Enriched applications system"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Applications now include detailed profile information for both clubs viewing players and players viewing clubs"
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
