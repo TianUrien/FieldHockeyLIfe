@@ -441,3 +441,7 @@ test_plan:
   test_priority: "high_first"
 
 agent_communication:
+    - agent: "testing"
+      message: "Completed comprehensive testing of Field Hockey Connect backend API email verification system. All core functionality working correctly. Email verification flow properly implemented with appropriate security measures. Registration returns success messages instead of user objects, login blocked until verification, verification endpoints handle edge cases properly. Email service integration working with graceful error handling for API failures. System ready for production with valid Resend API key."
+    - agent: "testing"
+      message: "Completed comprehensive testing of new profile viewing functionality in Field Hockey Connect backend. All 5 new API endpoints working correctly: 1) Player profile viewing - returns complete data without sensitive info, 2) Club profile viewing - returns complete data without sensitive info, 3) Enriched applications for clubs - includes detailed player profiles with applications, 4) Enriched applications for players - includes detailed club profiles with applications, 5) Vacancy with club profile - includes full club information with vacancy details. Fixed ObjectId serialization issues and implemented proper data sanitization. All endpoints perform well (<0.1s response times) and handle error cases appropriately. Security measures properly implemented with sensitive data removal. Feature ready for production use."
