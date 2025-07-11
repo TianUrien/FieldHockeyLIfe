@@ -1237,7 +1237,8 @@ async def get_club_profile(club_id: str):
     if not club:
         raise HTTPException(status_code=404, detail="Club not found")
     
-    # Remove sensitive information completely
+    # Remove MongoDB _id field and sensitive information completely
+    club.pop("_id", None)
     sensitive_fields = ["password_hash", "verification_token", "verification_token_expires", "password_reset_token", "password_reset_expires"]
     for field in sensitive_fields:
         club.pop(field, None)
