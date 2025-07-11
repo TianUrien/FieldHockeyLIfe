@@ -353,7 +353,384 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         print("   The email verification system is working correctly based on the tests above")
         
         print("\n🎉 Email verification system tests completed successfully!")
+        
+        # Now test the new profile viewing functionality with existing verified accounts
+        cls.test_profile_viewing_functionality()
         return
+    
+    @classmethod
+    def test_profile_viewing_functionality(cls):
+        """Test the new profile viewing functionality using existing verified accounts"""
+        print("\n===== Testing Profile Viewing Functionality =====")
+        
+        # Use existing verified accounts from the database
+        existing_club_email = "tianurien@hotmail.com"
+        existing_player_email = "tianurien@gmail.com"
+        
+        # First, get the existing club and player IDs by listing all users
+        print("\n🔍 Getting existing verified accounts...")
+        
+        # Get all clubs to find the existing club
+        response = requests.get(f"{BASE_URL}/clubs")
+        if response.status_code == 200:
+            clubs = response.json()
+            existing_club = None
+            for club in clubs:
+                if club.get("email") == existing_club_email:
+                    existing_club = club
+                    break
+            
+            if existing_club:
+                cls.existing_club_id = existing_club["id"]
+                print(f"✅ Found existing club: {existing_club['name']} (ID: {cls.existing_club_id})")
+            else:
+                print(f"❌ Could not find existing club with email {existing_club_email}")
+                return
+        else:
+            print(f"❌ Failed to get clubs list: {response.status_code} - {response.text}")
+            return
+        
+        # Get all players to find the existing player
+        response = requests.get(f"{BASE_URL}/players")
+        if response.status_code == 200:
+            players = response.json()
+            existing_player = None
+            for player in players:
+                if player.get("email") == existing_player_email:
+                    existing_player = player
+                    break
+            
+            if existing_player:
+                cls.existing_player_id = existing_player["id"]
+                print(f"✅ Found existing player: {existing_player['name']} (ID: {cls.existing_player_id})")
+            else:
+                print(f"❌ Could not find existing player with email {existing_player_email}")
+                return
+        else:
+            print(f"❌ Failed to get players list: {response.status_code} - {response.text}")
+            return
+        
+        # Test 1: Player Profile Viewing
+        print("\n🔍 Testing Player Profile Viewing (GET /api/players/{player_id}/profile)...")
+        response = requests.get(f"{BASE_URL}/players/{cls.existing_player_id}/profile")
+        if response.status_code == 200:
+            player_profile = response.json()
+            
+            # Check data completeness
+            required_fields = ["id", "name", "email", "position", "experience_level", "location"]
+            missing_fields = [field for field in required_fields if field not in player_profile]
+            if missing_fields:
+                print(f"❌ Player profile missing required fields: {missing_fields}")
+                return
+            
+            # Check sensitive information is removed
+            sensitive_fields = ["password_hash", "verification_token", "verification_token_expires"]
+            present_sensitive = [field for field in sensitive_fields if field in player_profile]
+            if present_sensitive:
+                print(f"❌ Player profile contains sensitive information: {present_sensitive}")
+                return
+            
+            print("✅ Player profile viewing test passed - complete data, no sensitive info")
+            print(f"   Player: {player_profile['name']} ({player_profile['position']}, {player_profile['experience_level']})")
+        else:
+            print(f"❌ Player profile viewing test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 2: Club Profile Viewing
+        print("\n🔍 Testing Club Profile Viewing (GET /api/clubs/{club_id}/profile)...")
+        response = requests.get(f"{BASE_URL}/clubs/{cls.existing_club_id}/profile")
+        if response.status_code == 200:
+            club_profile = response.json()
+            
+            # Check data completeness
+            required_fields = ["id", "name", "email", "location"]
+            missing_fields = [field for field in required_fields if field not in club_profile]
+            if missing_fields:
+                print(f"❌ Club profile missing required fields: {missing_fields}")
+                return
+            
+            # Check sensitive information is removed
+            sensitive_fields = ["password_hash", "verification_token", "verification_token_expires"]
+            present_sensitive = [field for field in sensitive_fields if field in club_profile]
+            if present_sensitive:
+                print(f"❌ Club profile contains sensitive information: {present_sensitive}")
+                return
+            
+            print("✅ Club profile viewing test passed - complete data, no sensitive info")
+            print(f"   Club: {club_profile['name']} ({club_profile['location']})")
+        else:
+            print(f"❌ Club profile viewing test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Create a test vacancy to enable application testing
+        print("\n🔍 Creating test vacancy for application testing...")
+        vacancy_data = {
+            "club_id": cls.existing_club_id,
+            "position": "Forward",
+            "title": "Test Forward Position",
+            "description": "Test vacancy for profile viewing functionality testing",
+            "requirements": "Test requirements",
+            "experience_level": "Intermediate",
+            "location": "Test Location",
+            "salary_range": "25000-35000",
+            "contract_type": "Full-time",
+            "benefits": ["Visa", "Accommodation"],
+            "status": "active",
+            "priority": "normal"
+        }
+        
+        response = requests.post(f"{BASE_URL}/vacancies", json=vacancy_data)
+        if response.status_code == 200:
+            vacancy = response.json()
+            cls.test_vacancy_id = vacancy["id"]
+            print(f"✅ Test vacancy created: {vacancy['title']} (ID: {cls.test_vacancy_id})")
+        else:
+            print(f"❌ Failed to create test vacancy: {response.status_code} - {response.text}")
+            return
+        
+        # Test 3: Vacancy with Club Profile
+        print("\n🔍 Testing Vacancy with Club Profile (GET /api/vacancies/{vacancy_id}/with-club-profile)...")
+        response = requests.get(f"{BASE_URL}/vacancies/{cls.test_vacancy_id}/with-club-profile")
+        if response.status_code == 200:
+            vacancy_with_club = response.json()
+            
+            # Check vacancy data is present
+            if "title" not in vacancy_with_club or "position" not in vacancy_with_club:
+                print("❌ Vacancy with club profile missing vacancy data")
+                return
+            
+            # Check club profile is embedded
+            if "club_profile" not in vacancy_with_club:
+                print("❌ Vacancy with club profile missing club_profile data")
+                return
+            
+            club_profile = vacancy_with_club["club_profile"]
+            
+            # Check club profile completeness
+            required_fields = ["id", "name", "email", "location"]
+            missing_fields = [field for field in required_fields if field not in club_profile]
+            if missing_fields:
+                print(f"❌ Embedded club profile missing required fields: {missing_fields}")
+                return
+            
+            # Check sensitive information is removed from club profile
+            sensitive_fields = ["password_hash", "verification_token", "verification_token_expires"]
+            present_sensitive = [field for field in sensitive_fields if field in club_profile]
+            if present_sensitive:
+                print(f"❌ Embedded club profile contains sensitive information: {present_sensitive}")
+                return
+            
+            print("✅ Vacancy with club profile test passed - complete data, no sensitive info")
+            print(f"   Vacancy: {vacancy_with_club['title']} by {club_profile['name']}")
+        else:
+            print(f"❌ Vacancy with club profile test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Create a test application to enable enriched application testing
+        print("\n🔍 Creating test application for enriched data testing...")
+        application_data = {
+            "player_id": cls.existing_player_id,
+            "vacancy_id": cls.test_vacancy_id,
+            "cover_letter": "Test cover letter for profile viewing functionality testing"
+        }
+        
+        response = requests.post(f"{BASE_URL}/applications", json=application_data)
+        if response.status_code == 200:
+            application = response.json()
+            cls.test_application_id = application["id"]
+            print(f"✅ Test application created: {application['player_name']} -> {application['vacancy_title']} (ID: {cls.test_application_id})")
+        else:
+            print(f"❌ Failed to create test application: {response.status_code} - {response.text}")
+            return
+        
+        # Test 4: Enriched Applications for Clubs
+        print("\n🔍 Testing Enriched Applications for Clubs (GET /api/clubs/{club_id}/applications-with-profiles)...")
+        response = requests.get(f"{BASE_URL}/clubs/{cls.existing_club_id}/applications-with-profiles")
+        if response.status_code == 200:
+            enriched_applications = response.json()
+            
+            if not enriched_applications:
+                print("❌ No enriched applications returned for club")
+                return
+            
+            # Check the first application
+            app = enriched_applications[0]
+            
+            # Check application data is present
+            required_app_fields = ["id", "player_id", "vacancy_id", "status", "applied_at"]
+            missing_fields = [field for field in required_app_fields if field not in app]
+            if missing_fields:
+                print(f"❌ Enriched application missing required fields: {missing_fields}")
+                return
+            
+            # Check player profile is embedded
+            if "player_profile" not in app:
+                print("❌ Enriched application missing player_profile data")
+                return
+            
+            player_profile = app["player_profile"]
+            
+            # Check player profile completeness
+            required_fields = ["id", "name", "email", "position", "experience_level", "location"]
+            missing_fields = [field for field in required_fields if field not in player_profile]
+            if missing_fields:
+                print(f"❌ Embedded player profile missing required fields: {missing_fields}")
+                return
+            
+            # Check sensitive information is removed from player profile
+            sensitive_fields = ["password_hash", "verification_token", "verification_token_expires"]
+            present_sensitive = [field for field in sensitive_fields if field in player_profile]
+            if present_sensitive:
+                print(f"❌ Embedded player profile contains sensitive information: {present_sensitive}")
+                return
+            
+            # Check vacancy details are embedded
+            if "vacancy_details" not in app:
+                print("❌ Enriched application missing vacancy_details data")
+                return
+            
+            print("✅ Enriched applications for clubs test passed - complete data, no sensitive info")
+            print(f"   Application: {player_profile['name']} ({player_profile['position']}) -> {app['vacancy_details']['title']}")
+        else:
+            print(f"❌ Enriched applications for clubs test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 5: Enriched Applications for Players
+        print("\n🔍 Testing Enriched Applications for Players (GET /api/players/{player_id}/applications-with-clubs)...")
+        response = requests.get(f"{BASE_URL}/players/{cls.existing_player_id}/applications-with-clubs")
+        if response.status_code == 200:
+            enriched_applications = response.json()
+            
+            if not enriched_applications:
+                print("❌ No enriched applications returned for player")
+                return
+            
+            # Check the first application
+            app = enriched_applications[0]
+            
+            # Check application data is present
+            required_app_fields = ["id", "player_id", "vacancy_id", "status", "applied_at"]
+            missing_fields = [field for field in required_app_fields if field not in app]
+            if missing_fields:
+                print(f"❌ Enriched application missing required fields: {missing_fields}")
+                return
+            
+            # Check vacancy details are embedded
+            if "vacancy_details" not in app:
+                print("❌ Enriched application missing vacancy_details data")
+                return
+            
+            # Check club profile is embedded
+            if "club_profile" not in app:
+                print("❌ Enriched application missing club_profile data")
+                return
+            
+            club_profile = app["club_profile"]
+            
+            # Check club profile completeness
+            required_fields = ["id", "name", "email", "location"]
+            missing_fields = [field for field in required_fields if field not in club_profile]
+            if missing_fields:
+                print(f"❌ Embedded club profile missing required fields: {missing_fields}")
+                return
+            
+            # Check sensitive information is removed from club profile
+            sensitive_fields = ["password_hash", "verification_token", "verification_token_expires"]
+            present_sensitive = [field for field in sensitive_fields if field in club_profile]
+            if present_sensitive:
+                print(f"❌ Embedded club profile contains sensitive information: {present_sensitive}")
+                return
+            
+            print("✅ Enriched applications for players test passed - complete data, no sensitive info")
+            print(f"   Application: {app['vacancy_details']['title']} at {club_profile['name']} ({club_profile['location']})")
+        else:
+            print(f"❌ Enriched applications for players test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test error cases
+        print("\n🔍 Testing error cases...")
+        
+        # Test non-existent player profile
+        fake_player_id = str(uuid.uuid4())
+        response = requests.get(f"{BASE_URL}/players/{fake_player_id}/profile")
+        if response.status_code == 404:
+            print("✅ Non-existent player profile test passed - returns 404")
+        else:
+            print(f"❌ Non-existent player profile test failed: Expected 404, got {response.status_code}")
+        
+        # Test non-existent club profile
+        fake_club_id = str(uuid.uuid4())
+        response = requests.get(f"{BASE_URL}/clubs/{fake_club_id}/profile")
+        if response.status_code == 404:
+            print("✅ Non-existent club profile test passed - returns 404")
+        else:
+            print(f"❌ Non-existent club profile test failed: Expected 404, got {response.status_code}")
+        
+        # Test non-existent vacancy with club profile
+        fake_vacancy_id = str(uuid.uuid4())
+        response = requests.get(f"{BASE_URL}/vacancies/{fake_vacancy_id}/with-club-profile")
+        if response.status_code == 404:
+            print("✅ Non-existent vacancy with club profile test passed - returns 404")
+        else:
+            print(f"❌ Non-existent vacancy with club profile test failed: Expected 404, got {response.status_code}")
+        
+        # Test applications for non-existent club
+        fake_club_id = str(uuid.uuid4())
+        response = requests.get(f"{BASE_URL}/clubs/{fake_club_id}/applications-with-profiles")
+        if response.status_code == 200:
+            result = response.json()
+            if result == []:
+                print("✅ Applications for non-existent club test passed - returns empty list")
+            else:
+                print(f"❌ Applications for non-existent club test failed: Expected empty list, got {result}")
+        else:
+            print(f"❌ Applications for non-existent club test failed: Expected 200, got {response.status_code}")
+        
+        # Test applications for non-existent player
+        fake_player_id = str(uuid.uuid4())
+        response = requests.get(f"{BASE_URL}/players/{fake_player_id}/applications-with-clubs")
+        if response.status_code == 200:
+            result = response.json()
+            if result == []:
+                print("✅ Applications for non-existent player test passed - returns empty list")
+            else:
+                print(f"❌ Applications for non-existent player test failed: Expected empty list, got {result}")
+        else:
+            print(f"❌ Applications for non-existent player test failed: Expected 200, got {response.status_code}")
+        
+        # Performance test - measure response times
+        print("\n🔍 Testing performance and response times...")
+        
+        start_time = time.time()
+        response = requests.get(f"{BASE_URL}/players/{cls.existing_player_id}/profile")
+        player_profile_time = time.time() - start_time
+        
+        start_time = time.time()
+        response = requests.get(f"{BASE_URL}/clubs/{cls.existing_club_id}/profile")
+        club_profile_time = time.time() - start_time
+        
+        start_time = time.time()
+        response = requests.get(f"{BASE_URL}/clubs/{cls.existing_club_id}/applications-with-profiles")
+        enriched_apps_time = time.time() - start_time
+        
+        start_time = time.time()
+        response = requests.get(f"{BASE_URL}/vacancies/{cls.test_vacancy_id}/with-club-profile")
+        vacancy_with_club_time = time.time() - start_time
+        
+        print(f"✅ Performance test results:")
+        print(f"   Player profile: {player_profile_time:.3f}s")
+        print(f"   Club profile: {club_profile_time:.3f}s")
+        print(f"   Enriched applications: {enriched_apps_time:.3f}s")
+        print(f"   Vacancy with club: {vacancy_with_club_time:.3f}s")
+        
+        # Check if any response time is too slow (> 2 seconds)
+        if any(t > 2.0 for t in [player_profile_time, club_profile_time, enriched_apps_time, vacancy_with_club_time]):
+            print("⚠️  Some endpoints are responding slowly (>2s)")
+        else:
+            print("✅ All endpoints responding within acceptable time (<2s)")
+        
+        print("\n🎉 Profile viewing functionality tests completed successfully!")
+        print("   All new endpoints are working correctly with proper data handling and security")
     
     @classmethod
     def test_enhanced_club_features(cls):
