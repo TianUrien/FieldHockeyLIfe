@@ -150,6 +150,49 @@ class MediaFile(BaseModel):
     file_size: int
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
 
+class PlayerProfile(BaseModel):
+    """Player profile model without sensitive information"""
+    id: str
+    name: str
+    email: str
+    country: Optional[str] = None
+    position: str
+    experience_level: str
+    location: str
+    bio: Optional[str] = None
+    age: Optional[int] = None
+    avatar: Optional[str] = None
+    cv_document: Optional[str] = None
+    photos: List[MediaFile] = []
+    videos: List[MediaFile] = []
+    is_verified: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+class ClubProfile(BaseModel):
+    """Club profile model without sensitive information"""
+    id: str
+    name: str
+    email: str
+    location: str
+    description: Optional[str] = None
+    contact_info: Optional[str] = None
+    established_year: Optional[int] = None
+    logo: Optional[str] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    club_type: Optional[str] = None
+    league: Optional[str] = None
+    achievements: Optional[str] = None
+    club_story: Optional[str] = None
+    facilities: Optional[str] = None
+    social_media: Optional[dict] = None
+    gallery_images: List[MediaFile] = []
+    videos: List[MediaFile] = []
+    is_verified: bool = False
+    created_at: datetime
+    updated_at: datetime
+
 class Player(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
