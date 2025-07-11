@@ -1171,6 +1171,147 @@ async def bulk_update_applications(
     
     return {"message": f"Updated {result.modified_count} applications successfully"}
 
+# Profile viewing endpoints
+@api_router.get("/players/{player_id}/profile", response_model=Player)
+async def get_player_profile(player_id: str):
+    """Get detailed player profile - accessible by clubs for reviewing applications"""
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    # Remove sensitive information
+    player.pop("password_hash", None)
+    player.pop("verification_token", None)
+    player.pop("verification_token_expires", None)
+    
+    return Player(**player)
+
+@api_router.get("/clubs/{club_id}/profile", response_model=Club)
+async def get_club_profile(club_id: str):
+    """Get detailed club profile - accessible by players for viewing club information"""
+    club = await db.clubs.find_one({"id": club_id})
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Remove sensitive information
+    club.pop("password_hash", None)
+    club.pop("verification_token", None)
+    club.pop("verification_token_expires", None)
+    
+    return Club(**club)
+
+@api_router.get("/clubs/{club_id}/applications-with-profiles")
+async def get_club_applications_with_profiles(
+    club_id: str,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    vacancy_id: Optional[str] = None,
+    limit: int = 100
+):
+    """Get applications for a club with detailed player profile information"""
+    # Get all vacancies for this club
+    filter_query = {"club_id": club_id}
+    if vacancy_id:
+        filter_query["id"] = vacancy_id
+    
+    vacancies = await db.vacancies.find(filter_query).to_list(1000)
+    vacancy_ids = [vacancy["id"] for vacancy in vacancies]
+    
+    if not vacancy_ids:
+        return []
+    
+    # Get all applications for these vacancies
+    app_filter = {"vacancy_id": {"$in": vacancy_ids}}
+    if status:
+        app_filter["status"] = status
+    if priority:
+        app_filter["priority"] = priority
+    
+    applications = await db.applications.find(app_filter).sort("applied_at", -1).limit(limit).to_list(limit)
+    
+    # Enrich applications with player profile data
+    enriched_applications = []
+    for app in applications:
+        # Get player profile
+        player = await db.players.find_one({"id": app["player_id"]})
+        if player:
+            # Remove sensitive data
+            player.pop("password_hash", None)
+            player.pop("verification_token", None)
+            player.pop("verification_token_expires", None)
+            
+            # Add player profile to application
+            app["player_profile"] = player
+        
+        # Get vacancy details
+        vacancy = await db.vacancies.find_one({"id": app["vacancy_id"]})
+        if vacancy:
+            app["vacancy_details"] = vacancy
+            
+        enriched_applications.append(app)
+    
+    return enriched_applications
+
+@api_router.get("/players/{player_id}/applications-with-clubs")
+async def get_player_applications_with_clubs(
+    player_id: str,
+    status: Optional[str] = None
+):
+    """Get applications for a player with detailed club profile information"""
+    filter_query = {"player_id": player_id}
+    if status:
+        filter_query["status"] = status
+    
+    applications = await db.applications.find(filter_query).sort("applied_at", -1).to_list(1000)
+    
+    # Enrich applications with club profile data
+    enriched_applications = []
+    for app in applications:
+        # Get vacancy details
+        vacancy = await db.vacancies.find_one({"id": app["vacancy_id"]})
+        if vacancy:
+            app["vacancy_details"] = vacancy
+            
+            # Get club profile
+            club = await db.clubs.find_one({"id": vacancy["club_id"]})
+            if club:
+                # Remove sensitive data
+                club.pop("password_hash", None)
+                club.pop("verification_token", None)
+                club.pop("verification_token_expires", None)
+                
+                # Add club profile to application
+                app["club_profile"] = club
+            
+        enriched_applications.append(app)
+    
+    return enriched_applications
+
+@api_router.get("/vacancies/{vacancy_id}/with-club-profile")
+async def get_vacancy_with_club_profile(vacancy_id: str):
+    """Get vacancy details with full club profile information"""
+    vacancy = await db.vacancies.find_one({"id": vacancy_id})
+    if not vacancy:
+        raise HTTPException(status_code=404, detail="Vacancy not found")
+    
+    # Get club profile
+    club = await db.clubs.find_one({"id": vacancy["club_id"]})
+    if club:
+        # Remove sensitive data
+        club.pop("password_hash", None)
+        club.pop("verification_token", None)
+        club.pop("verification_token_expires", None)
+        
+        vacancy["club_profile"] = club
+    
+    # Increment view count
+    await db.vacancies.update_one(
+        {"id": vacancy_id}, 
+        {"$inc": {"views_count": 1}}
+    )
+    
+    return vacancy
+
 # Email verification endpoints
 @api_router.post("/verify-email")
 async def verify_email(verification: EmailVerificationRequest):
