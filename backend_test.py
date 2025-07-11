@@ -25,6 +25,8 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         cls.application_id = None
         cls.photo_id = None
         cls.video_id = None
+        cls.player_created = False
+        cls.club_created = False
         
         # Test file paths
         cls.test_avatar_path = "/app/tests/test_avatar.jpg"
