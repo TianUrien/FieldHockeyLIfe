@@ -1222,7 +1222,8 @@ async def get_player_profile(player_id: str):
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
     
-    # Remove sensitive information completely
+    # Remove MongoDB _id field and sensitive information completely
+    player.pop("_id", None)
     sensitive_fields = ["password_hash", "verification_token", "verification_token_expires", "password_reset_token", "password_reset_expires"]
     for field in sensitive_fields:
         player.pop(field, None)
