@@ -3,12 +3,25 @@ import "./App.css";
 import axios from "axios";
 import PlayerProfile from "./PlayerProfile";
 import ClubProfile from "./ClubProfile";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import EmailVerification from "./EmailVerification";
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Main App Component wrapped in Router
 function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/verify-email" element={<EmailVerification />} />
+        <Route path="/*" element={<MainApp />} />
+      </Routes>
+    </Router>
+  );
+}
+
+function MainApp() {
   const [currentView, setCurrentView] = useState("home");
   const [players, setPlayers] = useState([]);
   const [clubs, setClubs] = useState([]);
@@ -16,12 +29,23 @@ function App() {
   const [applications, setApplications] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [userType, setUserType] = useState(null); // 'player' or 'club'
+  const [showVerificationAlert, setShowVerificationAlert] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
 
   const [editingVacancy, setEditingVacancy] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     loadData();
-  }, []);
+    
+    // Check if redirected from registration
+    const urlParams = new URLSearchParams(location.search);
+    if (urlParams.get('registered') === 'true') {
+      setShowVerificationAlert(true);
+      setVerificationEmail(urlParams.get('email') || '');
+    }
+  }, [location]);
 
   const loadData = async () => {
     try {
