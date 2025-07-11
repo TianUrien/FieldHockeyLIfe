@@ -254,6 +254,24 @@ class ClubLogin(BaseModel):
     email: str
     password: str
 
+# Email verification models
+class EmailVerificationRequest(BaseModel):
+    token: str
+    user_type: str  # "player" or "club"
+
+class ResendVerificationRequest(BaseModel):
+    email: str
+    user_type: str  # "player" or "club"
+
+class PasswordResetRequest(BaseModel):
+    email: str
+    user_type: str  # "player" or "club"
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
+    user_type: str  # "player" or "club"
+
 class Vacancy(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     club_id: str
