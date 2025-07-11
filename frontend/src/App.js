@@ -584,7 +584,7 @@ const ClubRegister = ({ onRegister }) => {
   );
 };
 
-const VacanciesList = ({ vacancies, currentUser, userType, onApply, hasApplied, clubs }) => (
+const VacanciesList = ({ vacancies, currentUser, userType, onApply, hasApplied, clubs, onViewClubProfile }) => (
   <div className="vacancies-container">
     <h2>Available Opportunities</h2>
     <div className="vacancies-grid">
@@ -624,15 +624,26 @@ const VacanciesList = ({ vacancies, currentUser, userType, onApply, hasApplied, 
               <p className="requirements">Requirements: {vacancy.requirements}</p>
             )}
             <p className="posted-date">Posted: {new Date(vacancy.created_at).toLocaleDateString()}</p>
-            {currentUser && userType === 'player' && (
-              <button 
-                className={`apply-btn ${hasApplied(vacancy.id) ? 'applied' : ''}`}
-                onClick={() => onApply(vacancy.id)}
-                disabled={hasApplied(vacancy.id)}
-              >
-                {hasApplied(vacancy.id) ? 'Applied' : 'Apply Now'}
-              </button>
-            )}
+            
+            <div className="vacancy-actions">
+              {onViewClubProfile && (
+                <button 
+                  className="view-profile-btn"
+                  onClick={() => onViewClubProfile(vacancy.club_id)}
+                >
+                  View Club Profile
+                </button>
+              )}
+              {currentUser && userType === 'player' && (
+                <button 
+                  className={`apply-btn ${hasApplied(vacancy.id) ? 'applied' : ''}`}
+                  onClick={() => onApply(vacancy.id)}
+                  disabled={hasApplied(vacancy.id)}
+                >
+                  {hasApplied(vacancy.id) ? 'Applied' : 'Apply Now'}
+                </button>
+              )}
+            </div>
           </div>
         );
       })}
