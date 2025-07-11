@@ -89,10 +89,10 @@ function MainApp() {
   const handlePlayerRegister = async (playerData) => {
     try {
       const response = await axios.post(`${API}/players`, playerData);
-      setCurrentUser(response.data);
-      setUserType('player');
-      loadData();
-      setCurrentView('player-dashboard');
+      alert(response.data.message);
+      setShowVerificationAlert(true);
+      setVerificationEmail(playerData.email);
+      setCurrentView('home');
     } catch (error) {
       alert(error.response?.data?.detail || "Error registering player");
     }
@@ -101,10 +101,10 @@ function MainApp() {
   const handleClubRegister = async (clubData) => {
     try {
       const response = await axios.post(`${API}/clubs`, clubData);
-      setCurrentUser(response.data);
-      setUserType('club');
-      loadData();
-      setCurrentView('club-dashboard');
+      alert(response.data.message);
+      setShowVerificationAlert(true);
+      setVerificationEmail(clubData.email);
+      setCurrentView('home');
     } catch (error) {
       alert(error.response?.data?.detail || "Error registering club");
     }
@@ -118,7 +118,14 @@ function MainApp() {
       loadData();
       setCurrentView('player-dashboard');
     } catch (error) {
-      alert(error.response?.data?.detail || "Invalid email or password");
+      if (error.response?.status === 403) {
+        // Email not verified
+        setShowVerificationAlert(true);
+        setVerificationEmail(loginData.email);
+        alert("Please verify your email address before logging in. Check your inbox for a verification email.");
+      } else {
+        alert(error.response?.data?.detail || "Invalid email or password");
+      }
     }
   };
 
@@ -130,7 +137,14 @@ function MainApp() {
       loadData();
       setCurrentView('club-dashboard');
     } catch (error) {
-      alert(error.response?.data?.detail || "Invalid email or password");
+      if (error.response?.status === 403) {
+        // Email not verified
+        setShowVerificationAlert(true);
+        setVerificationEmail(loginData.email);
+        alert("Please verify your email address before logging in. Check your inbox for a verification email.");
+      } else {
+        alert(error.response?.data?.detail || "Invalid email or password");
+      }
     }
   };
 
