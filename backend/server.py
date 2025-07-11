@@ -215,6 +215,10 @@ class Club(BaseModel):
     social_media: Optional[dict] = None  # {"instagram": "", "facebook": "", "twitter": ""}
     gallery_images: List[MediaFile] = []
     videos: List[MediaFile] = []
+    # Email verification fields
+    is_verified: bool = False
+    verification_token: Optional[str] = None
+    verification_token_expires: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
