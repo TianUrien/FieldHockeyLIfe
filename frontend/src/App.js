@@ -4,6 +4,8 @@ import axios from "axios";
 import PlayerProfile from "./PlayerProfile";
 import ClubProfile from "./ClubProfile";
 import EmailVerification from "./EmailVerification";
+import PlayerProfileView from "./PlayerProfileView";
+import ClubProfileView from "./ClubProfileView";
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
