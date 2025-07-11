@@ -3,6 +3,7 @@ import "./App.css";
 import axios from "axios";
 import PlayerProfile from "./PlayerProfile";
 import ClubProfile from "./ClubProfile";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
