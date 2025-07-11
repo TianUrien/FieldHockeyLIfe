@@ -357,6 +357,21 @@ function MainApp() {
         {currentView === "create-vacancy" && <CreateVacancy onSubmit={handleVacancyCreate} />}
         {currentView === "edit-vacancy" && editingVacancy && <EditVacancy vacancy={editingVacancy} onSubmit={handleVacancyEdit} onCancel={() => { setEditingVacancy(null); setCurrentView("club-dashboard"); }} />}
       </main>
+
+      {/* Profile View Modals */}
+      {viewingPlayerProfile && (
+        <PlayerProfileView 
+          playerId={viewingPlayerProfile} 
+          onClose={() => setViewingPlayerProfile(null)} 
+        />
+      )}
+      
+      {viewingClubProfile && (
+        <ClubProfileView 
+          clubId={viewingClubProfile} 
+          onClose={() => setViewingClubProfile(null)} 
+        />
+      )}
     </div>
   );
 }
