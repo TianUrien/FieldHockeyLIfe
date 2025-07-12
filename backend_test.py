@@ -876,6 +876,11 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
             params={"user_id": cls.existing_player_id, "user_type": "player"}
         )
         
+        print(f"   Debug: Request URL: {response.url}")
+        print(f"   Debug: Response status: {response.status_code}")
+        if response.status_code != 200:
+            print(f"   Debug: Response text: {response.text}")
+        
         if response.status_code == 200:
             messages = response.json()
             if messages and len(messages) >= 2:
