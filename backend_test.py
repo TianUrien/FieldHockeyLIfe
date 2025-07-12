@@ -734,6 +734,9 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         
         # Now test the messaging system
         cls.test_messaging_system()
+        
+        # Test file upload functionality
+        cls.test_file_upload_functionality()
     
     @classmethod
     def test_messaging_system(cls):
