@@ -460,7 +460,11 @@ class ApplicationUpdate(BaseModel):
 # Basic routes
 @api_router.get("/")
 async def root():
-    return {"message": "Field Hockey Connect API"}
+    return {"message": "Field Hockey Connect API", "version": "1.1"}
+
+@api_router.get("/test-debug")
+async def test_debug():
+    return {"message": "Debug endpoint working", "timestamp": datetime.utcnow()}
 
 # Authentication routes
 @api_router.post("/players/login", response_model=Player)
