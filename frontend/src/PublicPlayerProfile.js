@@ -38,8 +38,11 @@ const PublicPlayerProfile = ({ onContactPlayer }) => {
   };
 
   const handleContactClick = () => {
-    // TODO: Implement contact functionality
-    alert('Contact functionality will be implemented soon!');
+    if (onContactPlayer) {
+      onContactPlayer(player.id, 'player', player.name);
+    } else {
+      alert('Please log in to send messages');
+    }
   };
 
   if (loading) {
