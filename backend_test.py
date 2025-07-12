@@ -1113,5 +1113,130 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         """Dummy test to satisfy unittest runner"""
         pass
 
+def get_club_verification_token(email):
+    """Helper function to get verification token for a specific club account"""
+    print(f"\n===== Manual Verification Helper for {email} =====")
+    
+    # First, check if the club exists
+    response = requests.get(f"{BASE_URL}/clubs")
+    if response.status_code != 200:
+        print(f"❌ Failed to get clubs list: {response.status_code} - {response.text}")
+        return None
+    
+    clubs = response.json()
+    target_club = None
+    
+    for club in clubs:
+        if club.get("email") == email:
+            target_club = club
+            break
+    
+    if not target_club:
+        print(f"❌ Club with email {email} not found in the system")
+        return None
+    
+    print(f"✅ Found club: {target_club['name']} (ID: {target_club['id']})")
+    print(f"   Email: {target_club['email']}")
+    print(f"   Location: {target_club['location']}")
+    print(f"   Verified: {target_club.get('is_verified', False)}")
+    
+    if target_club.get('is_verified', False):
+        print("✅ Club is already verified!")
+        return None
+    
+    # Since we can't access the database directly through the API to get the verification token,
+    # we'll need to use the resend verification endpoint to generate a new token
+    print(f"\n🔍 Attempting to resend verification email to get a fresh token...")
+    
+    resend_data = {
+        "email": email,
+        "user_type": "club"
+    }
+    
+    response = requests.post(f"{BASE_URL}/resend-verification", json=resend_data)
+    
+    if response.status_code == 200:
+        result = response.json()
+        print("✅ Verification email resend successful!")
+        print(f"   Response: {result.get('message', 'Success')}")
+        print("\n📧 Since Resend is in testing mode and can't send to @hotmail.com addresses,")
+        print("   you'll need to manually verify using the database token.")
+        print("\n🔧 Manual verification steps:")
+        print("   1. Access the MongoDB database directly")
+        print("   2. Find the club document with email 'tianurien@hotmail.com'")
+        print("   3. Copy the 'verification_token' field value")
+        print("   4. Use the verification URL below with that token")
+        
+    elif response.status_code == 500:
+        result = response.json()
+        if "Failed to send verification email" in result.get("detail", ""):
+            print("⚠️  Email sending failed (expected due to Resend testing mode)")
+            print("   This confirms the account exists and needs verification")
+            print("\n🔧 Manual verification steps:")
+            print("   1. Access the MongoDB database directly")
+            print("   2. Find the club document with email 'tianurien@hotmail.com'")
+            print("   3. Copy the 'verification_token' field value")
+            print("   4. Use the verification URL below with that token")
+        else:
+            print(f"❌ Unexpected error: {result}")
+            return None
+    else:
+        print(f"❌ Resend verification failed: {response.status_code} - {response.text}")
+        return None
+    
+    # Provide the verification URL template
+    print(f"\n🔗 Manual Verification URL Template:")
+    print(f"   POST {BASE_URL}/verify-email")
+    print(f"   Content-Type: application/json")
+    print(f"   Body: {{")
+    print(f"     \"token\": \"<VERIFICATION_TOKEN_FROM_DATABASE>\",")
+    print(f"     \"user_type\": \"club\"")
+    print(f"   }}")
+    
+    print(f"\n🌐 Or use this curl command:")
+    print(f"   curl -X POST '{BASE_URL}/verify-email' \\")
+    print(f"        -H 'Content-Type: application/json' \\")
+    print(f"        -d '{{\"token\":\"<VERIFICATION_TOKEN_FROM_DATABASE>\",\"user_type\":\"club\"}}'")
+    
+    return target_club
+
+def test_manual_verification():
+    """Test function to help with manual verification of tianurien@hotmail.com"""
+    print("\n===== Manual Verification Test =====")
+    
+    # Test the verification endpoint with a dummy token to confirm it's working
+    print("\n🔍 Testing verification endpoint functionality...")
+    
+    verify_data = {
+        "token": "test-invalid-token-12345",
+        "user_type": "club"
+    }
+    
+    response = requests.post(f"{BASE_URL}/verify-email", json=verify_data)
+    
+    if response.status_code == 400:
+        result = response.json()
+        if "invalid" in result.get("detail", "").lower() or "expired" in result.get("detail", "").lower():
+            print("✅ Verification endpoint is working correctly (rejects invalid tokens)")
+        else:
+            print(f"❌ Verification endpoint error: {result}")
+            return
+    else:
+        print(f"❌ Verification endpoint test failed: Expected 400, got {response.status_code}")
+        return
+    
+    # Get the club verification token
+    club = get_club_verification_token("tianurien@hotmail.com")
+    
+    if club:
+        print(f"\n✅ Manual verification helper completed for {club['email']}")
+        print("   Follow the steps above to manually verify the account")
+    else:
+        print("\n❌ Could not complete manual verification helper")
+
 if __name__ == "__main__":
+    # Run the manual verification helper
+    test_manual_verification()
+    
+    # Then run the full test suite
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
