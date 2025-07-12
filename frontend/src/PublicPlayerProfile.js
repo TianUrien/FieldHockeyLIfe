@@ -5,7 +5,7 @@ import axios from 'axios';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const PublicPlayerProfile = () => {
+const PublicPlayerProfile = ({ onContactPlayer }) => {
   const { playerId } = useParams();
   const navigate = useNavigate();
   const [player, setPlayer] = useState(null);
