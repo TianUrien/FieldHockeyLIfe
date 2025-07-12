@@ -278,7 +278,7 @@ def send_password_reset_email(email: str, token: str, user_type: str, name: str)
         }
         
         payload = {
-            "from": "Field Hockey Connect <noreply@verify.fieldhockey.life>",
+            "from": "Field Hockey Connect <noreply@resend.dev>",
             "to": [email],
             "subject": "Password Reset Request - Field Hockey Connect",
             "html": html_content
