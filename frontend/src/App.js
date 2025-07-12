@@ -131,6 +131,15 @@ function MainApp() {
   const location = useLocation();
 
   useEffect(() => {
+    // Restore user session on app load
+    const savedUser = localStorage.getItem('currentUser');
+    const savedUserType = localStorage.getItem('userType');
+    
+    if (savedUser && savedUserType) {
+      setCurrentUser(JSON.parse(savedUser));
+      setUserType(savedUserType);
+    }
+    
     loadData();
     
     // Check if redirected from registration
