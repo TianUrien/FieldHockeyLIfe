@@ -314,6 +314,18 @@ function MainApp() {
             >
               View Opportunities
             </button>
+            <button 
+              className="nav-btn secondary" 
+              onClick={() => navigate("/browse/players")}
+            >
+              Browse Players
+            </button>
+            <button 
+              className="nav-btn secondary" 
+              onClick={() => navigate("/browse/clubs")}
+            >
+              Browse Clubs
+            </button>
           </div>
         </div>
       </nav>
