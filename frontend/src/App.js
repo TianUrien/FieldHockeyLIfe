@@ -209,6 +209,11 @@ function MainApp() {
       const response = await axios.post(`${API}/players/login`, loginData);
       setCurrentUser(response.data);
       setUserType('player');
+      
+      // Persist user state
+      localStorage.setItem('currentUser', JSON.stringify(response.data));
+      localStorage.setItem('userType', 'player');
+      
       loadData();
       setCurrentView('player-dashboard');
     } catch (error) {
@@ -228,6 +233,11 @@ function MainApp() {
       const response = await axios.post(`${API}/clubs/login`, loginData);
       setCurrentUser(response.data);
       setUserType('club');
+      
+      // Persist user state
+      localStorage.setItem('currentUser', JSON.stringify(response.data));
+      localStorage.setItem('userType', 'club');
+      
       loadData();
       setCurrentView('club-dashboard');
     } catch (error) {
@@ -240,6 +250,16 @@ function MainApp() {
         alert(error.response?.data?.detail || "Invalid email or password");
       }
     }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setUserType(null);
+    setCurrentView('home');
+    
+    // Clear persisted state
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userType');
   };
 
   const handleVacancyCreate = async (vacancyData) => {
