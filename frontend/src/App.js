@@ -485,20 +485,6 @@ function MainApp() {
               </button>
             )}
           </div>
-            
-            {currentUser && (
-              <div className="user-info">
-                <span className="user-greeting">
-                  Hello, {currentUser.name}
-                </span>
-                <button 
-                  className="nav-btn secondary"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </button>
-              </div>
-            )}
         </div>
       </nav>
 
