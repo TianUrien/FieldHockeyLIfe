@@ -1956,3 +1956,42 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Public Profile Card */
+.public-profile-card {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+  color: white;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.public-profile-card h3 {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-lg);
+}
+
+.public-profile-card p {
+  margin-bottom: var(--space-4);
+  opacity: 0.9;
+  font-size: var(--font-size-sm);
+}
+
+.public-profile-card .view-profile-btn {
+  background: white;
+  color: var(--primary-blue);
+  border: none;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-top: 0;
+}
+
+.public-profile-card .view-profile-btn:hover {
+  background: var(--background-gray);
+  transform: translateY(-1px);
+}
