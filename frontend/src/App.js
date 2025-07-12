@@ -10,6 +10,8 @@ import PublicPlayerProfile from "./PublicPlayerProfile";
 import PublicClubProfile from "./PublicClubProfile";
 import BrowsePlayers from "./BrowsePlayers";
 import BrowseClubs from "./BrowseClubs";
+import MessagingCenter from "./MessagingCenter";
+import MessageComposer from "./MessageComposer";
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
