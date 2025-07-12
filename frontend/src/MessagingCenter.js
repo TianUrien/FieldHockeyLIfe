@@ -35,7 +35,7 @@ const MessagingCenter = ({ currentUser, userType, onClose }) => {
   const loadConversations = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API}/conversations/${currentUser.id}/${userType}`);
+      const response = await axios.get(`${API}/conversations/${currentUser.id}/${userType}/list`);
       setConversations(response.data);
     } catch (error) {
       console.error('Error loading conversations:', error);
