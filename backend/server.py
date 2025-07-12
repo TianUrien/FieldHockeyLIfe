@@ -1718,7 +1718,7 @@ async def get_conversation_messages(conversation_id: str, user_id: str = Query(.
         )
         
         # Update conversation unread count
-        await update_conversation_unread_count(conversation_id, user_id, user_type.value)
+        await update_conversation_unread_count(conversation_id, user_id, user_type)
     
     # Return messages in chronological order (oldest first)
     return list(reversed(message_list))
