@@ -102,6 +102,21 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
+user_problem_statement: "Field Hockey Connect platform has multiple critical issues: Unable to upload photos or videos, Messages don't reach other users, Some pages not functioning properly, UI/UX improvements needed for buttons and layout"
+
+backend:
+  - task: "Messaging system routing fix"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Fixed critical messaging routing conflict. Backend messaging endpoints tested and working correctly. Updated frontend to use correct conversation endpoint /conversations/{user_id}/{user_type}/list instead of conflicting route."
+
 user_problem_statement: "User unable to login with player account (tianurien@gmail.com) - getting 'Invalid email or password' error"
 
 backend:
