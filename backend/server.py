@@ -1617,7 +1617,7 @@ async def send_message(message_request: SendMessageRequest, sender_id: str, send
     
     return {"message": "Message sent successfully", "message_id": message.id}
 
-@api_router.get("/conversations/{user_id}/{user_type}")
+@api_router.get("/conversations/{user_id}/{user_type}/list")
 async def get_user_conversations(user_id: str, user_type: str, limit: int = 20, offset: int = 0):
     """Get all conversations for a user"""
     if user_type not in ["player", "club"]:
