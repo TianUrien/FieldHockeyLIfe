@@ -193,6 +193,55 @@ class ClubProfile(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+class Message(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    conversation_id: str
+    sender_id: str
+    sender_type: str  # "player" or "club"
+    sender_name: str
+    receiver_id: str
+    receiver_type: str  # "player" or "club"
+    receiver_name: str
+    subject: Optional[str] = None
+    content: str
+    is_read: bool = False
+    is_deleted_by_sender: bool = False
+    is_deleted_by_receiver: bool = False
+    reply_to_message_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Conversation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    participant_1_id: str
+    participant_1_type: str  # "player" or "club"
+    participant_1_name: str
+    participant_2_id: str
+    participant_2_type: str  # "player" or "club"
+    participant_2_name: str
+    last_message_content: Optional[str] = None
+    last_message_at: Optional[datetime] = None
+    last_message_sender_id: Optional[str] = None
+    unread_count_p1: int = 0  # Unread count for participant 1
+    unread_count_p2: int = 0  # Unread count for participant 2
+    is_deleted_by_p1: bool = False
+    is_deleted_by_p2: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+# Message request/response models
+class SendMessageRequest(BaseModel):
+    receiver_id: str
+    receiver_type: str  # "player" or "club"
+    subject: Optional[str] = None
+    content: str
+    reply_to_message_id: Optional[str] = None
+
+class ConversationSummary(BaseModel):
+    conversation: Conversation
+    last_message: Optional[Message] = None
+    unread_count: int = 0
+
 class Player(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
