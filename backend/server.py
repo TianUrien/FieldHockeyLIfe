@@ -1679,8 +1679,8 @@ async def get_conversation_messages(conversation_id: str, user_id: str = Query(.
         raise HTTPException(status_code=404, detail="Conversation not found")
     
     is_participant = (
-        (conversation["participant_1_id"] == user_id and conversation["participant_1_type"] == user_type.value) or
-        (conversation["participant_2_id"] == user_id and conversation["participant_2_type"] == user_type.value)
+        (conversation["participant_1_id"] == user_id and conversation["participant_1_type"] == user_type) or
+        (conversation["participant_2_id"] == user_id and conversation["participant_2_type"] == user_type)
     )
     
     if not is_participant:
