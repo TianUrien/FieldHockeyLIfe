@@ -32,6 +32,14 @@ db = client[os.environ.get("DB_NAME")]
 app = FastAPI()
 api_router = APIRouter()
 
+# MongoDB connection
+client = AsyncIOMotorClient(os.environ.get("MONGO_URL"))
+db = client[os.environ.get("DB_NAME")]
+
+# FastAPI app and router
+app = FastAPI()
+api_router = APIRouter()
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
