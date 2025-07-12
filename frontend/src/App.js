@@ -233,6 +233,31 @@ function MainApp() {
     setVerificationEmail('');
   };
 
+  const handleContactUser = (userId, userType, userName) => {
+    if (!currentUser) {
+      alert('Please log in to send messages');
+      return;
+    }
+    
+    setMessageTarget({
+      receiverId: userId,
+      receiverType: userType,
+      receiverName: userName
+    });
+    setShowMessageComposer(true);
+  };
+
+  const handleMessagingClose = () => {
+    setShowMessaging(false);
+    loadUnreadMessageCount(); // Refresh unread count when closing
+  };
+
+  const handleMessageComposerClose = () => {
+    setShowMessageComposer(false);
+    setMessageTarget(null);
+    loadUnreadMessageCount(); // Refresh unread count after sending
+  };
+
   const loadEnrichedApplications = async () => {
     if (!currentUser || !userType) return;
     
