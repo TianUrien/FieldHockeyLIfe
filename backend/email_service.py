@@ -27,7 +27,7 @@ def send_verification_email(email: str, token: str, user_type: str, name: str) -
             logger.error("RESEND_API_KEY not found in environment variables")
             return False
 
-        frontend_url = os.getenv("FRONTEND_URL", "https://bdd291c1-244a-4f95-a238-200c9e7be078.preview.emergentagent.com")
+        frontend_url = os.getenv("FRONTEND_URL", "https://44807d79-6707-4de4-af2d-bda42117593c.preview.emergentagent.com")
         verification_url = f"{frontend_url}/verify-email?token={token}&type={user_type}"
         
         # Create HTML email template
@@ -182,7 +182,7 @@ def send_password_reset_email(email: str, token: str, user_type: str, name: str)
             logger.error("RESEND_API_KEY not found in environment variables")
             return False
 
-        frontend_url = os.getenv("FRONTEND_URL", "https://bdd291c1-244a-4f95-a238-200c9e7be078.preview.emergentagent.com")
+        frontend_url = os.getenv("FRONTEND_URL", "https://44807d79-6707-4de4-af2d-bda42117593c.preview.emergentagent.com")
         reset_url = f"{frontend_url}/reset-password?token={token}&type={user_type}"
         
         html_content = f"""
@@ -317,7 +317,7 @@ def send_welcome_email(email: str, user_type: str, name: str) -> bool:
             logger.error("RESEND_API_KEY not found in environment variables")
             return False
 
-        frontend_url = os.getenv("FRONTEND_URL", "https://bdd291c1-244a-4f95-a238-200c9e7be078.preview.emergentagent.com")
+        frontend_url = os.getenv("FRONTEND_URL", "https://44807d79-6707-4de4-af2d-bda42117593c.preview.emergentagent.com")
         
         html_content = f"""
         <!DOCTYPE html>

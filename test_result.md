@@ -251,7 +251,7 @@ agent_communication:
   - agent: "testing"
     message: "All profile viewing functionality tested and working perfectly. Player and club profile APIs working correctly with proper data sanitization. Enriched applications providing detailed profile information for both clubs and players."
 
-user_problem_statement: "Test the Field Hockey Connect backend API, specifically the player registration endpoint with email verification. The backend should be running on the internal port 8001 but accessible via the external URL: https://bdd291c1-244a-4f95-a238-200c9e7be078.preview.emergentagent.com/api"
+user_problem_statement: "Test the Field Hockey Connect backend API, specifically the player registration endpoint with email verification. The backend should be running on the internal port 8001 but accessible via the external URL: https://44807d79-6707-4de4-af2d-bda42117593c.preview.emergentagent.com/api"
 
 backend:
   - task: "API Health Check"
