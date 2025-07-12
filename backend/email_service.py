@@ -403,7 +403,7 @@ def send_welcome_email(email: str, user_type: str, name: str) -> bool:
         }
         
         payload = {
-            "from": "Field Hockey Connect <noreply@verify.fieldhockey.life>",
+            "from": "Field Hockey Connect <noreply@resend.dev>",
             "to": [email],
             "subject": "Welcome to Field Hockey Connect!",
             "html": html_content
