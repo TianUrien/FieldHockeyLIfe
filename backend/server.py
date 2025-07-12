@@ -24,6 +24,25 @@ load_dotenv(ROOT_DIR / '.env')
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+# File upload limits (in bytes)
+MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_DOCUMENT_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_PHOTO_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_VIDEO_SIZE = 100 * 1024 * 1024  # 100MB
+
+# Allowed file types
+ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/gif'}
+ALLOWED_DOCUMENT_TYPES = {'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}
+ALLOWED_VIDEO_TYPES = {'video/mp4', 'video/quicktime', 'video/x-msvideo'}
+
+# MongoDB connection
+client = AsyncIOMotorClient(os.environ.get("MONGO_URL"))
+db = client[os.environ.get("DB_NAME")]
+
+# FastAPI app and router
+app = FastAPI()
+api_router = APIRouter()
+
 # MongoDB connection
 client = AsyncIOMotorClient(os.environ.get("MONGO_URL"))
 db = client[os.environ.get("DB_NAME")]
