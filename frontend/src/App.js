@@ -18,13 +18,88 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Main App Component wrapped in Router
+// Wrapper components to pass contact functionality to public profiles
+const PublicPlayerProfileWrapper = () => {
+  const navigate = useNavigate();
+  
+  // Get current user from app state (we'll need to pass this through context or props)
+  // For now, we'll access it through a higher-order component
+  const [appState, setAppState] = useState(null);
+  
+  useEffect(() => {
+    // Check if user is logged in by looking at localStorage or sessionStorage
+    const checkUserState = () => {
+      // This is a simplified check - in production you'd have proper auth state management
+      const userData = localStorage.getItem('currentUser');
+      const userType = localStorage.getItem('userType');
+      
+      if (userData && userType) {
+        setAppState({
+          currentUser: JSON.parse(userData),
+          userType: userType
+        });
+      }
+    };
+    
+    checkUserState();
+  }, []);
+  
+  const handleContactPlayer = (playerId, playerType, playerName) => {
+    if (!appState?.currentUser) {
+      alert('Please log in to send messages');
+      navigate('/');
+      return;
+    }
+    
+    // For now, we'll show an alert. In the real implementation, 
+    // we'd trigger the message composer through a global state or context
+    alert(`Contact feature available! This will open a message composer to contact ${playerName}`);
+  };
+  
+  return <PublicPlayerProfile onContactPlayer={handleContactPlayer} />;
+};
+
+const PublicClubProfileWrapper = () => {
+  const navigate = useNavigate();
+  
+  const [appState, setAppState] = useState(null);
+  
+  useEffect(() => {
+    const checkUserState = () => {
+      const userData = localStorage.getItem('currentUser');
+      const userType = localStorage.getItem('userType');
+      
+      if (userData && userType) {
+        setAppState({
+          currentUser: JSON.parse(userData),
+          userType: userType
+        });
+      }
+    };
+    
+    checkUserState();
+  }, []);
+  
+  const handleContactClub = (clubId, clubType, clubName) => {
+    if (!appState?.currentUser) {
+      alert('Please log in to send messages');
+      navigate('/');
+      return;
+    }
+    
+    alert(`Contact feature available! This will open a message composer to contact ${clubName}`);
+  };
+  
+  return <PublicClubProfile onContactClub={handleContactClub} />;
+};
+
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/verify-email" element={<EmailVerification />} />
-        <Route path="/players/:playerId" element={<PublicPlayerProfile />} />
-        <Route path="/clubs/:clubId" element={<PublicClubProfile />} />
+        <Route path="/players/:playerId" element={<PublicPlayerProfileWrapper />} />
+        <Route path="/clubs/:clubId" element={<PublicClubProfileWrapper />} />
         <Route path="/browse/players" element={<BrowsePlayers />} />
         <Route path="/browse/clubs" element={<BrowseClubs />} />
         <Route path="/*" element={<MainApp />} />
