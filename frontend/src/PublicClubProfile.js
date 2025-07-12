@@ -43,8 +43,11 @@ const PublicClubProfile = ({ onContactClub }) => {
   };
 
   const handleContactClick = () => {
-    // TODO: Implement contact functionality
-    alert('Contact functionality will be implemented soon!');
+    if (onContactClub) {
+      onContactClub(club.id, 'club', club.name);
+    } else {
+      alert('Please log in to send messages');
+    }
   };
 
   const handleApplyClick = (vacancyId) => {
