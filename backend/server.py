@@ -1761,6 +1761,9 @@ async def mark_conversation_read(conversation_id: str, user_id: str, user_type: 
 @api_router.delete("/conversations/{conversation_id}")
 async def delete_conversation(conversation_id: str, user_id: str, user_type: str):
     """Delete a conversation for the current user"""
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
     conversation = await db.conversations.find_one({"id": conversation_id})
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
