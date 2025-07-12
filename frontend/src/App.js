@@ -446,6 +446,28 @@ function MainApp() {
           onClose={() => setViewingClubProfile(null)} 
         />
       )}
+
+      {/* Messaging Center */}
+      {showMessaging && (
+        <MessagingCenter
+          currentUser={currentUser}
+          userType={userType}
+          onClose={handleMessagingClose}
+        />
+      )}
+
+      {/* Message Composer Modal */}
+      {showMessageComposer && messageTarget && (
+        <MessageComposer
+          isOpen={showMessageComposer}
+          onClose={handleMessageComposerClose}
+          receiverId={messageTarget.receiverId}
+          receiverType={messageTarget.receiverType}
+          receiverName={messageTarget.receiverName}
+          currentUser={currentUser}
+          userType={userType}
+        />
+      )}
     </div>
   );
 }
