@@ -439,6 +439,14 @@ async def test_debug():
 
 @api_router.get("/test-query-params")
 async def test_query_params(user_id: str = Query(...), user_type: str = Query(...)):
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"DEBUG: test endpoint called")
+    logger.info(f"DEBUG: user_id: {user_id}")
+    logger.info(f"DEBUG: user_type: '{user_type}' (type: {type(user_type)})")
+    
     return {
         "user_id": user_id,
         "user_type": user_type,
