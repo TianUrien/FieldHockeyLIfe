@@ -479,6 +479,18 @@ backend:
         agent: "testing"
         comment: "Successfully completed manual verification for club account tianurien@hotmail.com. Found club 'Club Atletico Tian' (ID: f2f88ee7-41c9-46d4-aa68-0522a1f0e65e) in database. Retrieved verification token '71e28d66-b82c-4373-b3aa-6dc13dd4f086' and used POST /api/verify-email endpoint to verify account. Verification successful - account status changed from is_verified: false to is_verified: true. Login now works (blocked only by incorrect password, not verification requirement). Email verification system working correctly despite Resend testing mode limitations."
 
+  - task: "Manual verification for tianurien@gmail.com club account"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Successfully completed manual verification for club account tianurien@gmail.com. Found club 'Test Club' (ID: 244530af-bc62-477e-888e-842e2041f73b) in unverified state. Retrieved verification token '72d4fdc3-201e-419d-ae04-cd91dce0c7bd' from MongoDB database and successfully verified the account using POST /api/verify-email endpoint. Account verification status changed from is_verified: false to is_verified: true. Account is now ready for testing file upload and messaging functionality. Login endpoint works correctly (blocked only by unknown password, not verification requirement)."
+
   - task: "Email Service Integration"
     implemented: true
     working: true
