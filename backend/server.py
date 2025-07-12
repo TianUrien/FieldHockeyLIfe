@@ -466,6 +466,15 @@ async def root():
 async def test_debug():
     return {"message": "Debug endpoint working", "timestamp": datetime.utcnow()}
 
+@api_router.get("/test-query-params")
+async def test_query_params(user_id: str = Query(...), user_type: str = Query(...)):
+    return {
+        "user_id": user_id,
+        "user_type": user_type,
+        "user_type_valid": user_type in ["player", "club"],
+        "timestamp": datetime.utcnow()
+    }
+
 # Authentication routes
 @api_router.post("/players/login", response_model=Player)
 async def login_player(credentials: PlayerLogin):
