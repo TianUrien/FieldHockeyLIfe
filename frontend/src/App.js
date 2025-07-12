@@ -252,8 +252,20 @@ function MainApp() {
   useEffect(() => {
     if (currentUser && userType) {
       loadEnrichedApplications();
+      loadUnreadMessageCount();
     }
   }, [currentUser, userType]);
+
+  const loadUnreadMessageCount = async () => {
+    if (!currentUser || !userType) return;
+    
+    try {
+      const response = await axios.get(`${API}/messages/unread-count/${currentUser.id}/${userType}`);
+      setUnreadMessageCount(response.data.unread_count);
+    } catch (error) {
+      console.error('Error loading unread message count:', error);
+    }
+  };
 
   return (
     <div className="App">
