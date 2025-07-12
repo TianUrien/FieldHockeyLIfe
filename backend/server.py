@@ -1760,7 +1760,7 @@ async def mark_conversation_read(conversation_id: str, user_id: str = Query(...)
     return {"message": "Conversation marked as read"}
 
 @api_router.delete("/conversations/{conversation_id}")
-async def delete_conversation(conversation_id: str, user_id: str, user_type: str):
+async def delete_conversation(conversation_id: str, user_id: str = Query(...), user_type: str = Query(...)):
     """Delete a conversation for the current user"""
     if user_type not in ["player", "club"]:
         raise HTTPException(status_code=400, detail="Invalid user type")
