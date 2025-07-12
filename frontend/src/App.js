@@ -646,14 +646,12 @@ const VacanciesList = ({ vacancies, currentUser, userType, onApply, hasApplied, 
             <p className="posted-date">Posted: {new Date(vacancy.created_at).toLocaleDateString()}</p>
             
             <div className="vacancy-actions">
-              {onViewClubProfile && (
-                <button 
-                  className="view-profile-btn"
-                  onClick={() => onViewClubProfile(vacancy.club_id)}
-                >
-                  View Club Profile
-                </button>
-              )}
+              <button 
+                className="view-profile-btn"
+                onClick={() => navigate(`/clubs/${vacancy.club_id}`)}
+              >
+                View Club Profile
+              </button>
               {currentUser && userType === 'player' && (
                 <button 
                   className={`apply-btn ${hasApplied(vacancy.id) ? 'applied' : ''}`}
