@@ -1727,6 +1727,9 @@ async def get_conversation_messages(conversation_id: str, user_id: str, user_typ
 @api_router.put("/conversations/{conversation_id}/mark-read")
 async def mark_conversation_read(conversation_id: str, user_id: str, user_type: str):
     """Mark all messages in a conversation as read"""
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
     # Verify user is part of this conversation
     conversation = await db.conversations.find_one({"id": conversation_id})
     if not conversation:
