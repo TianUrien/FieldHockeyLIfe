@@ -1569,6 +1569,328 @@ async def get_vacancy_with_club_profile(vacancy_id: str):
     
     return vacancy
 
+# Messaging endpoints
+@api_router.post("/messages/send")
+async def send_message(message_request: SendMessageRequest, sender_id: str, sender_type: str):
+    """Send a message to another user"""
+    # Get sender information
+    if sender_type == "player":
+        sender = await db.players.find_one({"id": sender_id})
+        if not sender:
+            raise HTTPException(status_code=404, detail="Sender not found")
+        sender_name = sender["name"]
+    else:
+        sender = await db.clubs.find_one({"id": sender_id})
+        if not sender:
+            raise HTTPException(status_code=404, detail="Sender not found")
+        sender_name = sender["name"]
+    
+    # Get receiver information
+    if message_request.receiver_type == "player":
+        receiver = await db.players.find_one({"id": message_request.receiver_id})
+        if not receiver:
+            raise HTTPException(status_code=404, detail="Receiver not found")
+        receiver_name = receiver["name"]
+    else:
+        receiver = await db.clubs.find_one({"id": message_request.receiver_id})
+        if not receiver:
+            raise HTTPException(status_code=404, detail="Receiver not found")
+        receiver_name = receiver["name"]
+    
+    # Find or create conversation
+    conversation = await find_or_create_conversation(
+        sender_id, sender_type, sender_name,
+        message_request.receiver_id, message_request.receiver_type, receiver_name
+    )
+    
+    # Create message
+    message = Message(
+        conversation_id=conversation["id"],
+        sender_id=sender_id,
+        sender_type=sender_type,
+        sender_name=sender_name,
+        receiver_id=message_request.receiver_id,
+        receiver_type=message_request.receiver_type,
+        receiver_name=receiver_name,
+        subject=message_request.subject,
+        content=message_request.content,
+        reply_to_message_id=message_request.reply_to_message_id
+    )
+    
+    # Save message to database
+    await db.messages.insert_one(message.dict())
+    
+    # Update conversation with last message info
+    await update_conversation_last_message(conversation["id"], message)
+    
+    return {"message": "Message sent successfully", "message_id": message.id}
+
+@api_router.get("/conversations/{user_id}/{user_type}")
+async def get_user_conversations(user_id: str, user_type: str, limit: int = 20, offset: int = 0):
+    """Get all conversations for a user"""
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
+    # Build query based on user type
+    query = {
+        "$or": [
+            {"participant_1_id": user_id, "participant_1_type": user_type, "is_deleted_by_p1": False},
+            {"participant_2_id": user_id, "participant_2_type": user_type, "is_deleted_by_p2": False}
+        ]
+    }
+    
+    conversations = await db.conversations.find(query).sort("last_message_at", -1).skip(offset).limit(limit).to_list(limit)
+    
+    conversation_summaries = []
+    for conv in conversations:
+        conv.pop("_id", None)
+        
+        # Get last message
+        last_message = await db.messages.find_one(
+            {"conversation_id": conv["id"]},
+            sort=[("created_at", -1)]
+        )
+        if last_message:
+            last_message.pop("_id", None)
+        
+        # Calculate unread count for this user
+        unread_count = 0
+        if conv["participant_1_id"] == user_id and conv["participant_1_type"] == user_type:
+            unread_count = conv["unread_count_p1"]
+        elif conv["participant_2_id"] == user_id and conv["participant_2_type"] == user_type:
+            unread_count = conv["unread_count_p2"]
+        
+        conversation_summaries.append({
+            "conversation": Conversation(**conv),
+            "last_message": Message(**last_message) if last_message else None,
+            "unread_count": unread_count
+        })
+    
+    return conversation_summaries
+
+@api_router.get("/conversations/{conversation_id}/messages")
+async def get_conversation_messages(conversation_id: str, user_id: str, user_type: str, limit: int = 50, offset: int = 0):
+    """Get messages in a conversation"""
+    # Verify user is part of this conversation
+    conversation = await db.conversations.find_one({"id": conversation_id})
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    is_participant = (
+        (conversation["participant_1_id"] == user_id and conversation["participant_1_type"] == user_type) or
+        (conversation["participant_2_id"] == user_id and conversation["participant_2_type"] == user_type)
+    )
+    
+    if not is_participant:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Get messages
+    query = {
+        "conversation_id": conversation_id,
+        "$or": [
+            {"sender_id": user_id, "is_deleted_by_sender": False},
+            {"receiver_id": user_id, "is_deleted_by_receiver": False}
+        ]
+    }
+    
+    messages = await db.messages.find(query).sort("created_at", -1).skip(offset).limit(limit).to_list(limit)
+    
+    # Remove MongoDB _id and mark messages as read
+    message_list = []
+    message_ids_to_mark_read = []
+    
+    for msg in messages:
+        msg.pop("_id", None)
+        
+        # Mark unread messages as read if user is the receiver
+        if msg["receiver_id"] == user_id and not msg["is_read"]:
+            message_ids_to_mark_read.append(msg["id"])
+        
+        message_list.append(Message(**msg))
+    
+    # Mark messages as read
+    if message_ids_to_mark_read:
+        await db.messages.update_many(
+            {"id": {"$in": message_ids_to_mark_read}},
+            {"$set": {"is_read": True, "updated_at": datetime.utcnow()}}
+        )
+        
+        # Update conversation unread count
+        await update_conversation_unread_count(conversation_id, user_id, user_type)
+    
+    # Return messages in chronological order (oldest first)
+    return list(reversed(message_list))
+
+@api_router.put("/conversations/{conversation_id}/mark-read")
+async def mark_conversation_read(conversation_id: str, user_id: str, user_type: str):
+    """Mark all messages in a conversation as read"""
+    # Verify user is part of this conversation
+    conversation = await db.conversations.find_one({"id": conversation_id})
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    is_participant = (
+        (conversation["participant_1_id"] == user_id and conversation["participant_1_type"] == user_type) or
+        (conversation["participant_2_id"] == user_id and conversation["participant_2_type"] == user_type)
+    )
+    
+    if not is_participant:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Mark all unread messages as read
+    await db.messages.update_many(
+        {
+            "conversation_id": conversation_id,
+            "receiver_id": user_id,
+            "is_read": False
+        },
+        {"$set": {"is_read": True, "updated_at": datetime.utcnow()}}
+    )
+    
+    # Update conversation unread count
+    await update_conversation_unread_count(conversation_id, user_id, user_type)
+    
+    return {"message": "Conversation marked as read"}
+
+@api_router.delete("/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: str, user_id: str, user_type: str):
+    """Delete a conversation for the current user"""
+    conversation = await db.conversations.find_one({"id": conversation_id})
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    # Mark conversation as deleted for this user
+    if conversation["participant_1_id"] == user_id and conversation["participant_1_type"] == user_type:
+        await db.conversations.update_one(
+            {"id": conversation_id},
+            {"$set": {"is_deleted_by_p1": True, "updated_at": datetime.utcnow()}}
+        )
+    elif conversation["participant_2_id"] == user_id and conversation["participant_2_type"] == user_type:
+        await db.conversations.update_one(
+            {"id": conversation_id},
+            {"$set": {"is_deleted_by_p2": True, "updated_at": datetime.utcnow()}}
+        )
+    else:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    return {"message": "Conversation deleted"}
+
+@api_router.get("/messages/unread-count/{user_id}/{user_type}")
+async def get_unread_message_count(user_id: str, user_type: str):
+    """Get total unread message count for a user"""
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
+    # Sum unread counts from all conversations
+    pipeline = [
+        {
+            "$match": {
+                "$or": [
+                    {"participant_1_id": user_id, "participant_1_type": user_type, "is_deleted_by_p1": False},
+                    {"participant_2_id": user_id, "participant_2_type": user_type, "is_deleted_by_p2": False}
+                ]
+            }
+        },
+        {
+            "$group": {
+                "_id": None,
+                "total_unread": {
+                    "$sum": {
+                        "$cond": [
+                            {"$and": [
+                                {"$eq": ["$participant_1_id", user_id]},
+                                {"$eq": ["$participant_1_type", user_type]}
+                            ]},
+                            "$unread_count_p1",
+                            "$unread_count_p2"
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+    
+    result = await db.conversations.aggregate(pipeline).to_list(1)
+    total_unread = result[0]["total_unread"] if result else 0
+    
+    return {"unread_count": total_unread}
+
+# Helper functions for messaging
+async def find_or_create_conversation(p1_id: str, p1_type: str, p1_name: str, p2_id: str, p2_type: str, p2_name: str):
+    """Find existing conversation or create new one"""
+    # Try to find existing conversation
+    conversation = await db.conversations.find_one({
+        "$or": [
+            {
+                "participant_1_id": p1_id, "participant_1_type": p1_type,
+                "participant_2_id": p2_id, "participant_2_type": p2_type
+            },
+            {
+                "participant_1_id": p2_id, "participant_1_type": p2_type,
+                "participant_2_id": p1_id, "participant_2_type": p1_type
+            }
+        ]
+    })
+    
+    if conversation:
+        return conversation
+    
+    # Create new conversation
+    new_conversation = Conversation(
+        participant_1_id=p1_id,
+        participant_1_type=p1_type,
+        participant_1_name=p1_name,
+        participant_2_id=p2_id,
+        participant_2_type=p2_type,
+        participant_2_name=p2_name
+    )
+    
+    await db.conversations.insert_one(new_conversation.dict())
+    return new_conversation.dict()
+
+async def update_conversation_last_message(conversation_id: str, message: Message):
+    """Update conversation with last message information"""
+    # Increment unread count for the receiver
+    conversation = await db.conversations.find_one({"id": conversation_id})
+    if not conversation:
+        return
+    
+    update_data = {
+        "last_message_content": message.content[:100] + "..." if len(message.content) > 100 else message.content,
+        "last_message_at": message.created_at,
+        "last_message_sender_id": message.sender_id,
+        "updated_at": datetime.utcnow()
+    }
+    
+    # Increment unread count for receiver
+    if conversation["participant_1_id"] == message.receiver_id and conversation["participant_1_type"] == message.receiver_type:
+        update_data["unread_count_p1"] = conversation.get("unread_count_p1", 0) + 1
+    elif conversation["participant_2_id"] == message.receiver_id and conversation["participant_2_type"] == message.receiver_type:
+        update_data["unread_count_p2"] = conversation.get("unread_count_p2", 0) + 1
+    
+    await db.conversations.update_one(
+        {"id": conversation_id},
+        {"$set": update_data}
+    )
+
+async def update_conversation_unread_count(conversation_id: str, user_id: str, user_type: str):
+    """Reset unread count for a user in a conversation"""
+    conversation = await db.conversations.find_one({"id": conversation_id})
+    if not conversation:
+        return
+    
+    update_data = {"updated_at": datetime.utcnow()}
+    
+    if conversation["participant_1_id"] == user_id and conversation["participant_1_type"] == user_type:
+        update_data["unread_count_p1"] = 0
+    elif conversation["participant_2_id"] == user_id and conversation["participant_2_type"] == user_type:
+        update_data["unread_count_p2"] = 0
+    
+    await db.conversations.update_one(
+        {"id": conversation_id},
+        {"$set": update_data}
+    )
+
 # Email verification endpoints
 @api_router.post("/verify-email")
 async def verify_email(verification: EmailVerificationRequest):
