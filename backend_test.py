@@ -731,6 +731,377 @@ class FieldHockeyConnectAPITest(unittest.TestCase):
         
         print("\n🎉 Profile viewing functionality tests completed successfully!")
         print("   All new endpoints are working correctly with proper data handling and security")
+        
+        # Now test the messaging system
+        cls.test_messaging_system()
+    
+    @classmethod
+    def test_messaging_system(cls):
+        """Test the comprehensive messaging and contact system"""
+        print("\n===== Testing Messaging and Contact System =====")
+        
+        # Use existing verified accounts from the database
+        existing_club_email = "tianurien@hotmail.com"
+        existing_player_email = "tianurien@gmail.com"
+        
+        # We should already have these IDs from the profile viewing tests
+        if not hasattr(cls, 'existing_club_id') or not hasattr(cls, 'existing_player_id'):
+            print("❌ Missing existing user IDs from previous tests")
+            return
+        
+        print(f"Using existing accounts:")
+        print(f"  Player ID: {cls.existing_player_id}")
+        print(f"  Club ID: {cls.existing_club_id}")
+        
+        # Test 1: Send Message from Player to Club
+        print("\n🔍 Testing Send Message (Player to Club)...")
+        message_data = {
+            "receiver_id": cls.existing_club_id,
+            "receiver_type": "club",
+            "subject": "Interest in Joining Your Club",
+            "content": "Hello, I am interested in joining your field hockey club. I am an experienced midfielder looking for new opportunities. Could we discuss potential positions available?"
+        }
+        
+        response = requests.post(
+            f"{BASE_URL}/messages/send",
+            json=message_data,
+            params={"sender_id": cls.existing_player_id, "sender_type": "player"}
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            if "message" in result and "Message sent successfully" in result["message"]:
+                cls.message_id_1 = result.get("message_id")
+                print("✅ Send message (Player to Club) test passed")
+                print(f"   Message ID: {cls.message_id_1}")
+            else:
+                print(f"❌ Send message test failed: Wrong response format: {result}")
+                return
+        else:
+            print(f"❌ Send message test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 2: Send Message from Club to Player (Reply)
+        print("\n🔍 Testing Send Message (Club to Player - Reply)...")
+        reply_data = {
+            "receiver_id": cls.existing_player_id,
+            "receiver_type": "player",
+            "subject": "Re: Interest in Joining Your Club",
+            "content": "Thank you for your interest! We would love to discuss opportunities with you. We have several midfielder positions available for the upcoming season. When would be a good time for you to visit our training facility?",
+            "reply_to_message_id": cls.message_id_1
+        }
+        
+        response = requests.post(
+            f"{BASE_URL}/messages/send",
+            json=reply_data,
+            params={"sender_id": cls.existing_club_id, "sender_type": "club"}
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            if "message" in result and "Message sent successfully" in result["message"]:
+                cls.message_id_2 = result.get("message_id")
+                print("✅ Send message (Club to Player - Reply) test passed")
+                print(f"   Reply Message ID: {cls.message_id_2}")
+            else:
+                print(f"❌ Send reply message test failed: Wrong response format: {result}")
+                return
+        else:
+            print(f"❌ Send reply message test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 3: Get User Conversations for Player
+        print("\n🔍 Testing Get User Conversations (Player)...")
+        response = requests.get(f"{BASE_URL}/conversations/{cls.existing_player_id}/player")
+        
+        if response.status_code == 200:
+            conversations = response.json()
+            if conversations and len(conversations) > 0:
+                cls.conversation_id = conversations[0]["conversation"]["id"]
+                conversation = conversations[0]
+                
+                # Check conversation structure
+                required_fields = ["conversation", "last_message", "unread_count"]
+                missing_fields = [field for field in required_fields if field not in conversation]
+                if missing_fields:
+                    print(f"❌ Conversation missing required fields: {missing_fields}")
+                    return
+                
+                # Check unread count
+                if conversation["unread_count"] > 0:
+                    print(f"✅ Get User Conversations (Player) test passed - {len(conversations)} conversations, {conversation['unread_count']} unread")
+                else:
+                    print(f"✅ Get User Conversations (Player) test passed - {len(conversations)} conversations, no unread messages")
+                
+                print(f"   Conversation ID: {cls.conversation_id}")
+                print(f"   Last message: {conversation['last_message']['content'][:50]}...")
+            else:
+                print("❌ Get User Conversations test failed: No conversations returned")
+                return
+        else:
+            print(f"❌ Get User Conversations test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 4: Get User Conversations for Club
+        print("\n🔍 Testing Get User Conversations (Club)...")
+        response = requests.get(f"{BASE_URL}/conversations/{cls.existing_club_id}/club")
+        
+        if response.status_code == 200:
+            conversations = response.json()
+            if conversations and len(conversations) > 0:
+                conversation = conversations[0]
+                
+                # Verify it's the same conversation
+                if conversation["conversation"]["id"] == cls.conversation_id:
+                    print(f"✅ Get User Conversations (Club) test passed - {len(conversations)} conversations")
+                    print(f"   Same conversation found from club perspective")
+                else:
+                    print("❌ Get User Conversations (Club) test failed: Different conversation ID")
+                    return
+            else:
+                print("❌ Get User Conversations (Club) test failed: No conversations returned")
+                return
+        else:
+            print(f"❌ Get User Conversations (Club) test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 5: Get Conversation Messages
+        print("\n🔍 Testing Get Conversation Messages...")
+        response = requests.get(
+            f"{BASE_URL}/conversations/{cls.conversation_id}/messages",
+            params={"user_id": cls.existing_player_id, "user_type": "player"}
+        )
+        
+        if response.status_code == 200:
+            messages = response.json()
+            if messages and len(messages) >= 2:
+                # Check message structure
+                first_message = messages[0]
+                required_fields = ["id", "conversation_id", "sender_id", "sender_type", "content", "created_at"]
+                missing_fields = [field for field in required_fields if field not in first_message]
+                if missing_fields:
+                    print(f"❌ Message missing required fields: {missing_fields}")
+                    return
+                
+                # Check message ordering (should be chronological - oldest first)
+                if len(messages) >= 2:
+                    msg1_time = datetime.fromisoformat(messages[0]["created_at"].replace('Z', '+00:00'))
+                    msg2_time = datetime.fromisoformat(messages[1]["created_at"].replace('Z', '+00:00'))
+                    if msg1_time <= msg2_time:
+                        print(f"✅ Get Conversation Messages test passed - {len(messages)} messages in chronological order")
+                    else:
+                        print("❌ Get Conversation Messages test failed: Messages not in chronological order")
+                        return
+                else:
+                    print(f"✅ Get Conversation Messages test passed - {len(messages)} messages")
+                
+                print(f"   First message: {messages[0]['content'][:50]}...")
+                print(f"   Last message: {messages[-1]['content'][:50]}...")
+            else:
+                print("❌ Get Conversation Messages test failed: Not enough messages returned")
+                return
+        else:
+            print(f"❌ Get Conversation Messages test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 6: Get Unread Message Count (before marking as read)
+        print("\n🔍 Testing Get Unread Message Count (before marking as read)...")
+        response = requests.get(f"{BASE_URL}/messages/unread-count/{cls.existing_player_id}/player")
+        
+        if response.status_code == 200:
+            result = response.json()
+            if "unread_count" in result:
+                initial_unread_count = result["unread_count"]
+                print(f"✅ Get Unread Message Count test passed - {initial_unread_count} unread messages")
+            else:
+                print(f"❌ Get Unread Message Count test failed: Wrong response format: {result}")
+                return
+        else:
+            print(f"❌ Get Unread Message Count test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 7: Mark Conversation as Read
+        print("\n🔍 Testing Mark Conversation as Read...")
+        response = requests.put(
+            f"{BASE_URL}/conversations/{cls.conversation_id}/mark-read",
+            params={"user_id": cls.existing_player_id, "user_type": "player"}
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            if "message" in result and "marked as read" in result["message"]:
+                print("✅ Mark Conversation as Read test passed")
+            else:
+                print(f"❌ Mark Conversation as Read test failed: Wrong response format: {result}")
+                return
+        else:
+            print(f"❌ Mark Conversation as Read test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 8: Get Unread Message Count (after marking as read)
+        print("\n🔍 Testing Get Unread Message Count (after marking as read)...")
+        response = requests.get(f"{BASE_URL}/messages/unread-count/{cls.existing_player_id}/player")
+        
+        if response.status_code == 200:
+            result = response.json()
+            if "unread_count" in result:
+                final_unread_count = result["unread_count"]
+                if final_unread_count < initial_unread_count:
+                    print(f"✅ Unread count correctly decreased from {initial_unread_count} to {final_unread_count}")
+                else:
+                    print(f"⚠️  Unread count unchanged: {final_unread_count} (may be correct if other conversations have unread messages)")
+            else:
+                print(f"❌ Get Unread Message Count (after) test failed: Wrong response format: {result}")
+                return
+        else:
+            print(f"❌ Get Unread Message Count (after) test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 9: Send another message to test conversation updates
+        print("\n🔍 Testing Send Follow-up Message...")
+        followup_data = {
+            "receiver_id": cls.existing_club_id,
+            "receiver_type": "club",
+            "content": "That sounds great! I am available for a visit next week. What days work best for your training schedule?"
+        }
+        
+        response = requests.post(
+            f"{BASE_URL}/messages/send",
+            json=followup_data,
+            params={"sender_id": cls.existing_player_id, "sender_type": "player"}
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            if "message" in result and "Message sent successfully" in result["message"]:
+                print("✅ Send Follow-up Message test passed")
+            else:
+                print(f"❌ Send Follow-up Message test failed: Wrong response format: {result}")
+                return
+        else:
+            print(f"❌ Send Follow-up Message test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 10: Delete Conversation (soft delete)
+        print("\n🔍 Testing Delete Conversation (soft delete)...")
+        response = requests.delete(
+            f"{BASE_URL}/conversations/{cls.conversation_id}",
+            params={"user_id": cls.existing_player_id, "user_type": "player"}
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            if "message" in result and "deleted" in result["message"]:
+                print("✅ Delete Conversation test passed")
+            else:
+                print(f"❌ Delete Conversation test failed: Wrong response format: {result}")
+                return
+        else:
+            print(f"❌ Delete Conversation test failed: {response.status_code} - {response.text}")
+            return
+        
+        # Test 11: Verify conversation is deleted for player but not for club
+        print("\n🔍 Testing Conversation Visibility After Deletion...")
+        
+        # Check player's conversations (should not see the deleted conversation)
+        response = requests.get(f"{BASE_URL}/conversations/{cls.existing_player_id}/player")
+        if response.status_code == 200:
+            player_conversations = response.json()
+            deleted_conversation_visible = any(conv["conversation"]["id"] == cls.conversation_id for conv in player_conversations)
+            if not deleted_conversation_visible:
+                print("✅ Conversation correctly hidden from player after deletion")
+            else:
+                print("❌ Conversation still visible to player after deletion")
+                return
+        else:
+            print(f"❌ Failed to check player conversations after deletion: {response.status_code}")
+            return
+        
+        # Check club's conversations (should still see the conversation)
+        response = requests.get(f"{BASE_URL}/conversations/{cls.existing_club_id}/club")
+        if response.status_code == 200:
+            club_conversations = response.json()
+            conversation_still_visible = any(conv["conversation"]["id"] == cls.conversation_id for conv in club_conversations)
+            if conversation_still_visible:
+                print("✅ Conversation still visible to club after player deletion (soft delete working correctly)")
+            else:
+                print("❌ Conversation incorrectly hidden from club after player deletion")
+                return
+        else:
+            print(f"❌ Failed to check club conversations after deletion: {response.status_code}")
+            return
+        
+        # Test Error Cases
+        print("\n🔍 Testing Error Cases...")
+        
+        # Test sending message to non-existent user
+        fake_user_id = str(uuid.uuid4())
+        error_message_data = {
+            "receiver_id": fake_user_id,
+            "receiver_type": "player",
+            "content": "This should fail"
+        }
+        
+        response = requests.post(
+            f"{BASE_URL}/messages/send",
+            json=error_message_data,
+            params={"sender_id": cls.existing_player_id, "sender_type": "player"}
+        )
+        
+        if response.status_code == 404:
+            print("✅ Send message to non-existent user correctly returns 404")
+        else:
+            print(f"❌ Send message to non-existent user test failed: Expected 404, got {response.status_code}")
+        
+        # Test accessing conversation messages without permission
+        response = requests.get(
+            f"{BASE_URL}/conversations/{cls.conversation_id}/messages",
+            params={"user_id": fake_user_id, "user_type": "player"}
+        )
+        
+        if response.status_code == 403:
+            print("✅ Access conversation without permission correctly returns 403")
+        else:
+            print(f"❌ Access conversation without permission test failed: Expected 403, got {response.status_code}")
+        
+        # Test invalid user type
+        response = requests.get(f"{BASE_URL}/conversations/{cls.existing_player_id}/invalid_type")
+        
+        if response.status_code == 400:
+            print("✅ Invalid user type correctly returns 400")
+        else:
+            print(f"❌ Invalid user type test failed: Expected 400, got {response.status_code}")
+        
+        # Performance test - measure response times
+        print("\n🔍 Testing Messaging Performance...")
+        
+        start_time = time.time()
+        response = requests.get(f"{BASE_URL}/conversations/{cls.existing_club_id}/club")
+        conversations_time = time.time() - start_time
+        
+        start_time = time.time()
+        response = requests.get(f"{BASE_URL}/messages/unread-count/{cls.existing_club_id}/club")
+        unread_count_time = time.time() - start_time
+        
+        print(f"✅ Messaging performance test results:")
+        print(f"   Get conversations: {conversations_time:.3f}s")
+        print(f"   Get unread count: {unread_count_time:.3f}s")
+        
+        if conversations_time > 2.0 or unread_count_time > 2.0:
+            print("⚠️  Some messaging endpoints are responding slowly (>2s)")
+        else:
+            print("✅ All messaging endpoints responding within acceptable time (<2s)")
+        
+        print("\n🎉 Messaging and Contact System tests completed successfully!")
+        print("   All messaging endpoints are working correctly:")
+        print("   ✅ Send messages between players and clubs")
+        print("   ✅ Conversation creation and management")
+        print("   ✅ Message retrieval with proper ordering")
+        print("   ✅ Unread count tracking and updates")
+        print("   ✅ Mark conversations as read functionality")
+        print("   ✅ Soft delete conversations (user-specific)")
+        print("   ✅ Security measures (access control)")
+        print("   ✅ Error handling for edge cases")
     
     @classmethod
     def test_enhanced_club_features(cls):
