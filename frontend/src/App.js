@@ -673,43 +673,58 @@ const VacanciesList = ({ vacancies, currentUser, userType, onApply, hasApplied, 
   );
 };
 
-const PlayerDashboard = ({ player, applications, onPlayerUpdate, onViewClubProfile }) => (
-  <div className="dashboard-container">
-    <h2>Player Dashboard</h2>
-    <div className="dashboard-grid">
-      <div className="full-width-section">
-        <PlayerProfile player={player} onPlayerUpdate={onPlayerUpdate} />
-      </div>
-      
-      <div className="applications-card">
-        <h3>Your Applications</h3>
-        {applications.length === 0 ? (
-          <p>No applications yet. Browse opportunities to apply!</p>
-        ) : (
-          <div className="applications-list">
-            {applications.map(app => (
-              <div key={app.id} className="application-item">
-                <div className="application-header">
-                  <p><strong>{app.vacancy_details?.position || app.vacancy_position}</strong> at {app.club_profile?.name || app.club_name}</p>
-                  <p className={`status ${app.status}`}>Status: {app.status}</p>
+const PlayerDashboard = ({ player, applications, onPlayerUpdate, onViewClubProfile }) => {
+  const navigate = useNavigate();
+  
+  return (
+    <div className="dashboard-container">
+      <h2>Player Dashboard</h2>
+      <div className="dashboard-grid">
+        <div className="full-width-section">
+          <PlayerProfile player={player} onPlayerUpdate={onPlayerUpdate} />
+        </div>
+        
+        <div className="applications-card">
+          <h3>Your Applications</h3>
+          {applications.length === 0 ? (
+            <p>No applications yet. Browse opportunities to apply!</p>
+          ) : (
+            <div className="applications-list">
+              {applications.map(app => (
+                <div key={app.id} className="application-item">
+                  <div className="application-header">
+                    <p><strong>{app.vacancy_details?.position || app.vacancy_position}</strong> at {app.club_profile?.name || app.club_name}</p>
+                    <p className={`status ${app.status}`}>Status: {app.status}</p>
+                  </div>
+                  <p>Applied: {new Date(app.applied_at).toLocaleDateString()}</p>
+                  {app.club_profile && (
+                    <button 
+                      className="view-profile-btn"
+                      onClick={() => navigate(`/clubs/${app.club_profile.id}`)}
+                    >
+                      View Club Profile
+                    </button>
+                  )}
                 </div>
-                <p>Applied: {new Date(app.applied_at).toLocaleDateString()}</p>
-                {app.club_profile && onViewClubProfile && (
-                  <button 
-                    className="view-profile-btn"
-                    onClick={() => onViewClubProfile(app.club_profile.id)}
-                  >
-                    View Club Profile
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className="public-profile-card">
+          <h3>Your Public Profile</h3>
+          <p>Your public profile is visible to clubs and other users on the platform.</p>
+          <button 
+            className="view-profile-btn"
+            onClick={() => navigate(`/players/${player.id}`)}
+          >
+            View Your Public Profile
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ClubDashboard = ({ club, vacancies, applications, onCreateVacancy, onClubUpdate, onEditVacancy, onDeleteVacancy, onViewPlayerProfile }) => (
   <div className="dashboard-container">
