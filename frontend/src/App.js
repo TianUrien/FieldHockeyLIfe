@@ -344,6 +344,17 @@ function MainApp() {
             >
               Browse Clubs
             </button>
+            {currentUser && (
+              <button 
+                className="nav-btn secondary" 
+                onClick={() => setShowMessaging(true)}
+              >
+                Messages
+                {unreadMessageCount > 0 && (
+                  <span className="nav-unread-badge">{unreadMessageCount}</span>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </nav>
