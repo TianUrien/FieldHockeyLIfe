@@ -21,6 +21,17 @@ from enum import Enum
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+UPLOAD_DIR = ROOT_DIR / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+# MongoDB connection
+client = AsyncIOMotorClient(os.environ.get("MONGO_URL"))
+db = client[os.environ.get("DB_NAME")]
+
+# FastAPI app and router
+app = FastAPI()
+api_router = APIRouter()
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
