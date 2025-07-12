@@ -141,7 +141,7 @@ def send_verification_email(email: str, token: str, user_type: str, name: str) -
         }
         
         payload = {
-            "from": "Field Hockey Connect <noreply@verify.fieldhockey.life>",
+            "from": "Field Hockey Connect <noreply@resend.dev>",
             "to": [email],
             "subject": f"Verify your email address - Field Hockey Connect",
             "html": html_content,
