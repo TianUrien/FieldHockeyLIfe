@@ -24,69 +24,16 @@ load_dotenv(ROOT_DIR / '.env')
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# File upload settings
-UPLOAD_DIR = ROOT_DIR / "uploads"
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif"}
-ALLOWED_DOCUMENT_TYPES = {"application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
-ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/x-msvideo"}
-
-# File size limits (in bytes)
-MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5MB
-MAX_DOCUMENT_SIZE = 10 * 1024 * 1024  # 10MB
-MAX_PHOTO_SIZE = 10 * 1024 * 1024  # 10MB
-MAX_VIDEO_SIZE = 300 * 1024 * 1024  # 300MB (increased for larger videos)
-
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# Create the main app without a prefix
-app = FastAPI(
-    # Increase file upload size limit to 300MB
-    docs_url="/docs",
-    redoc_url="/redoc"
-)
-
-# Add middleware to handle large file uploads
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-
-# Configure upload size limit
-import uvicorn
-uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.access"]["propagate"] = False
-
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
-
-# Custom StaticFiles to handle video content properly
-from fastapi.staticfiles import StaticFiles
-from starlette.responses import FileResponse
-from starlette.requests import Request
-import os
-
-class VideoStaticFiles(StaticFiles):
-    async def get_response(self, path: str, scope):
-        try:
-            response = await super().get_response(path, scope)
-            if path.endswith(('.mp4', '.mov', '.avi')):
-                # Set proper headers for video files
-                response.headers["Accept-Ranges"] = "bytes"
-                response.headers["Cache-Control"] = "no-cache"
-            return response
-        except Exception:
-            return await super().get_response(path, scope)
-
-# Serve uploaded files through the API router with video support
-app.mount("/api/uploads", VideoStaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
-
+# User type enum for validation
+class UserType(str, Enum):
+    player = "player"
+    club = "club"
 
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
 
 def validate_file_type(file_content: bytes, allowed_types: set) -> bool:
     """Validate file type using python-magic"""
