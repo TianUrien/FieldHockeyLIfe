@@ -1669,7 +1669,7 @@ async def get_user_conversations(user_id: str, user_type: str, limit: int = 20, 
     return conversation_summaries
 
 @api_router.get("/conversations/{conversation_id}/messages")
-async def get_conversation_messages(conversation_id: str, user_id: str, user_type: str, limit: int = 50, offset: int = 0):
+async def get_conversation_messages(conversation_id: str, user_id: str = Query(...), user_type: str = Query(...), limit: int = Query(50), offset: int = Query(0)):
     """Get messages in a conversation"""
     print(f"DEBUG: user_type received: '{user_type}', type: {type(user_type)}")
     if user_type not in ["player", "club"]:
