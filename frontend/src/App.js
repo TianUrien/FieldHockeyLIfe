@@ -21,6 +21,10 @@ function App() {
     <Router>
       <Routes>
         <Route path="/verify-email" element={<EmailVerification />} />
+        <Route path="/players/:playerId" element={<PublicPlayerProfile />} />
+        <Route path="/clubs/:clubId" element={<PublicClubProfile />} />
+        <Route path="/browse/players" element={<BrowsePlayers />} />
+        <Route path="/browse/clubs" element={<BrowseClubs />} />
         <Route path="/*" element={<MainApp />} />
       </Routes>
     </Router>
