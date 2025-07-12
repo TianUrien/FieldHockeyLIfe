@@ -46,6 +46,10 @@ function MainApp() {
   const [viewingPlayerProfile, setViewingPlayerProfile] = useState(null);
   const [viewingClubProfile, setViewingClubProfile] = useState(null);
   const [enrichedApplications, setEnrichedApplications] = useState([]);
+  const [showMessaging, setShowMessaging] = useState(false);
+  const [showMessageComposer, setShowMessageComposer] = useState(false);
+  const [messageTarget, setMessageTarget] = useState(null);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const [editingVacancy, setEditingVacancy] = useState(null);
   const navigate = useNavigate();
