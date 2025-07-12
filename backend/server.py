@@ -1655,6 +1655,11 @@ async def get_user_conversations(user_id: str, user_type: str, limit: int = 20, 
 @api_router.get("/conversations/{conversation_id}/messages")
 async def get_conversation_messages(conversation_id: str, user_id: str = Query(...), user_type: str = Query(...), limit: int = Query(50), offset: int = Query(0)):
     """Get messages in a conversation"""
+    # Debug logging
+    print(f"DEBUG: user_type received: '{user_type}' (type: {type(user_type)})")
+    print(f"DEBUG: user_type repr: {repr(user_type)}")
+    print(f"DEBUG: user_type in ['player', 'club']: {user_type in ['player', 'club']}")
+    
     if user_type not in ["player", "club"]:
         raise HTTPException(status_code=400, detail=f"Invalid user type: '{user_type}'. Expected 'player' or 'club'")
     
