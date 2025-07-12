@@ -1653,15 +1653,25 @@ async def get_user_conversations(user_id: str, user_type: str, limit: int = 20, 
     return conversation_summaries
 
 @api_router.get("/conversations/{conversation_id}/messages")
-async def get_conversation_messages(conversation_id: str, user_id: str = Query(...), user_type: UserType = Query(...), limit: int = Query(50), offset: int = Query(0)):
+async def get_conversation_messages(conversation_id: str, user_id: str = Query(...), user_type: str = Query(...), limit: int = Query(50), offset: int = Query(0)):
     """Get messages in a conversation"""
     # Debug logging
-    print(f"DEBUG: user_type received: '{user_type}' (type: {type(user_type)})")
-    print(f"DEBUG: user_type repr: {repr(user_type)}")
-    print(f"DEBUG: user_type.value: {user_type.value}")
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
     
-    if user_type.value not in ["player", "club"]:
-        raise HTTPException(status_code=400, detail=f"Invalid user type: '{user_type.value}'. Expected 'player' or 'club'")
+    logger.info(f"DEBUG: Received request for conversation messages")
+    logger.info(f"DEBUG: conversation_id: {conversation_id}")
+    logger.info(f"DEBUG: user_id: {user_id}")
+    logger.info(f"DEBUG: user_type: '{user_type}' (type: {type(user_type)})")
+    logger.info(f"DEBUG: user_type repr: {repr(user_type)}")
+    logger.info(f"DEBUG: user_type in ['player', 'club']: {user_type in ['player', 'club']}")
+    
+    if user_type not in ["player", "club"]:
+        logger.error(f"DEBUG: Invalid user_type validation failed")
+        raise HTTPException(status_code=400, detail=f"Invalid user type: '{user_type}'. Expected 'player' or 'club'")
+    
+    logger.info(f"DEBUG: user_type validation passed")
     
     # Verify user is part of this conversation
     conversation = await db.conversations.find_one({"id": conversation_id})
