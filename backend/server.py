@@ -1671,6 +1671,9 @@ async def get_user_conversations(user_id: str, user_type: str, limit: int = 20, 
 @api_router.get("/conversations/{conversation_id}/messages")
 async def get_conversation_messages(conversation_id: str, user_id: str, user_type: str, limit: int = 50, offset: int = 0):
     """Get messages in a conversation"""
+    if user_type not in ["player", "club"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
     # Verify user is part of this conversation
     conversation = await db.conversations.find_one({"id": conversation_id})
     if not conversation:
