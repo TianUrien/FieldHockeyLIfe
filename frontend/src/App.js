@@ -6,6 +6,10 @@ import ClubProfile from "./ClubProfile";
 import EmailVerification from "./EmailVerification";
 import PlayerProfileView from "./PlayerProfileView";
 import ClubProfileView from "./ClubProfileView";
+import PublicPlayerProfile from "./PublicPlayerProfile";
+import PublicClubProfile from "./PublicClubProfile";
+import BrowsePlayers from "./BrowsePlayers";
+import BrowseClubs from "./BrowseClubs";
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
